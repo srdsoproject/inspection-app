@@ -1,7 +1,7 @@
-streamlit
-pandas
-plotly
-gspread
-google-auth
-st-aggrid
-python-dateutil
+streamlit==1.37.1
+pandas==2.2.2
+plotly==5.23.0
+gspread==6.0.2
+google-auth==2.34.0
+st-aggrid==0.3.5
+python-dateutil==2.9.0
