@@ -17,6 +17,35 @@ import gspread
 import datetime
 import re
 import os
+import streamlit as st
+import pandas as pd
+from datetime import date
+from io import BytesIO
+import plotly.express as px
+import plotly.graph_objects as go
+import gspread
+from google.oauth2.service_account import Credentials
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
+import re
+from dateutil import parser
+import os
+import time
+
+# ---- PAGE CONFIG MUST BE FIRST STREAMLIT COMMAND ----
+st.set_page_config(page_title="Inspection App", layout="wide")
+
+# -------------------- GOOGLE SHEETS SETUP --------------------
+SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
+SHEET_NAME = "Sheet1"
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+try:
+    CREDS = Credentials.from_service_account_file("gspread_key.json", scopes=SCOPES)
+    gc = gspread.authorize(CREDS)
+    sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+except Exception as e:
+    st.error(f"Error connecting to Google Sheets: {e}")
+    st.stop()
 
 # LOGIN SYSTEM (STEP 1)
 # -------------------- USERS --------------------
