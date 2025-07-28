@@ -2,7 +2,7 @@
 wheel
 streamlit==1.35.0
 numpy==2.2.2
-pandas==2.2.2
+pandas
 plotly==5.23.0
 gspread==6.0.2
 google-auth==2.34.0
