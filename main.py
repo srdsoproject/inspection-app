@@ -19,7 +19,13 @@ import datetime
 import re
 import os
 
-USERS = st.secrets["users"]
+import toml
+
+with open(".streamlit/secrets.toml") as f:
+    secrets_dict = toml.load(f)
+
+USERS = secrets_dict["users"]
+
 
 def login(email, password):
     for user in USERS:
