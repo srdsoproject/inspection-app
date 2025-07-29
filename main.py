@@ -65,11 +65,15 @@ SCOPES = [
 ]
 
 try:
-    # Convert AttrDict to normal dict
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
-    # Replace literal "\n" with real newlines
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\\\n", "\n").strip()
+    # DEBUG: see how many slashes we need to replace
+    pk = service_account_info["private_key"]
+    st.text("First 50 chars raw: " + pk[:50])
+    
+    # If you see "\n" → use 1 slash
+    # If you see "\\n" → use 2 slashes
+    service_account_info["private_key"] = pk.replace("\\n", "\n").replace("\\\\n", "\n").strip()
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
