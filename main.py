@@ -68,8 +68,7 @@ try:
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
     # FIX: convert literal "\n" into actual newlines
-   service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
-
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
@@ -83,6 +82,7 @@ try:
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
+
 
 
 
