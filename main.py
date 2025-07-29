@@ -56,7 +56,6 @@ if not st.session_state.logged_in:
 
 # --- Google Sheets Setup ---
 import gspread
-import json
 from google.oauth2.service_account import Credentials
 import streamlit as st
 
@@ -66,8 +65,11 @@ SCOPES = [
 ]
 
 try:
-    # Load the JSON string and parse it
-    service_account_info = json.loads(st.secrets["gcp_service_account"])
+    # Convert AttrDict to normal dict
+    service_account_info = st.secrets["gcp_service_account"].to_dict()
+
+    # Replace literal "\n" with real newlines
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
@@ -81,7 +83,6 @@ try:
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
-
 
 
 # APP UI STARTS HERE
