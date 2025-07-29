@@ -65,42 +65,19 @@ SCOPES = [
 ]
 
 try:
-    # Grab service account as a dict
+    # Get the dict from secrets
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
-    # Convert escaped newlines into real newlines
+    # Fix newlines in private key
     service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
-    # Authorize with Google
-    creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
-    gc = gspread.authorize(creds)
+    # Debug: Check key integrity
+    pk = service_account_info["private_key"]
+    st.write("Key starts with:", pk.splitlines()[0])
+    st.write("Key ends with:", pk.splitlines()[-1])
+    st.write("Total lines:", len(pk.splitlines()))
 
-    SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
-    SHEET_NAME = "Sheet1"
-    sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
-
-    st.success("✅ Connected to Google Sheets!")
-
-except Exception as e:
-    st.error(f"Error connecting to Google Sheets: {e}")
-    st.stop()
-import gspread
-from google.oauth2.service_account import Credentials
-import streamlit as st
-
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
-
-try:
-    # Grab service account as a dict
-    service_account_info = st.secrets["gcp_service_account"].to_dict()
-
-    # Convert escaped newlines into real newlines
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
-
-    # Authorize with Google
+    # Authenticate
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
 
