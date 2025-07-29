@@ -77,6 +77,7 @@ if st.sidebar.button("🚪 Logout"):
 
 # ---------- HELPER FUNCTIONS & CONSTANTS ----------
 
+# -------------------- CONSTANT LISTS --------------------
 # Station, Footplate & Gate Lists
 station_list = [
     'BRB', 'MLM', 'BGVN', 'JNTR', 'PRWD', 'WSB', 'PPJ', 'JEUR', 'KEM', 'BLNI', 'DHS', 'KWV', 'WDS',
@@ -134,15 +135,13 @@ ACTION_BY_LIST = [""] + [
     'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
     'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC'
 ]
+
+
 # -------------------- SESSION STATE INIT --------------------
-# Initialize session state variables for filters if they don't exist
-# These ensure filters persist across reruns.
 if "head" not in st.session_state:
     st.session_state.head = ""
 if "sub_head" not in st.session_state:
     st.session_state.sub_head = ""
-
-# Initialize filter states for "View Records" tab
 if "view_type_filter" not in st.session_state:
     st.session_state.view_type_filter = []
 if "view_location_filter" not in st.session_state:
@@ -159,10 +158,61 @@ if "view_from" not in st.session_state:
     st.session_state.view_from = None
 if "view_to" not in st.session_state:
     st.session_state.view_to = None
+
+
+# -------------------- HELPER FUNCTIONS --------------------
+import re
+
+def normalize(text: str) -> str:
+    """Lowercase and clean feedback text for keyword matching."""
+    if not isinstance(text, str):
+        return ""
+    text = text.lower()
+    text = re.sub(r'\s+', ' ', text)  # remove multiple spaces
+    return text.strip()
+
 def classify_feedback(feedback):
-    if pd.isna(feedback) or str(feedback).strip() == "":
+    if not isinstance(feedback, str) or feedback.strip() == "":
         return "Pending"
-    return "Resolved"
+
+    feedback_normalized = normalize(feedback)
+    date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', feedback_normalized))
+
+    pending_keywords = [ ... ]  # your full list here
+    resolved_keywords = [ ... ]  # your full list here
+
+    found_resolved = any(kw in feedback_normalized for kw in resolved_keywords)
+    found_pending = any(kw in feedback_normalized for kw in pending_keywords)
+
+    if found_resolved or date_found:
+        return "Resolved"
+    if found_pending:
+        return "Pending"
+    return "Pending"
+
+def load_data():
+    try:
+        data = sheet.get_all_values()
+        if not data or not data[0] or len(data) < 2:
+            st.info("Google Sheet is empty or only contains headers.")
+            return pd.DataFrame(columns=columns)
+
+        df = pd.DataFrame(data[1:], columns=data[0])
+        if 'Date of Inspection' in df.columns:
+            df['Date of Inspection'] = pd.to_datetime(
+                df['Date of Inspection'], errors='coerce'
+            ).dt.strftime('%d.%m.%y')
+        return df
+    except gspread.exceptions.APIError as e:
+        st.error(f"Google Sheets API Error loading data: {e}")
+        st.info("Check your sheet ID and service account permissions.")
+        return pd.DataFrame(columns=columns)
+    except Exception as e:
+        st.error(f"Unexpected error loading data: {e}")
+        return pd.DataFrame(columns=columns)
+
+def apply_common_filters(df, prefix=""):
+    return df
 
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
