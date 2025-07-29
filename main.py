@@ -222,7 +222,7 @@ def apply_common_filters(df, prefix=""):
             key=prefix + "action"
         )
 
-        col6, col7 = st.columns(2)
+        '''col6, col7 = st.columns(2)
         col6.date_input(
             "From Date",
             value=st.session_state.get(prefix + "from", None),
@@ -232,7 +232,7 @@ def apply_common_filters(df, prefix=""):
             "To Date",
             value=st.session_state.get(prefix + "to", None),
             key=prefix + "to"
-        )
+        )'''
 
     df_filtered = df.copy()
 
