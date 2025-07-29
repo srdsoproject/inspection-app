@@ -18,13 +18,37 @@ import datetime
 import re
 import os
 import streamlit as st
+import pandas as pd
 
+# Try importing AgGrid safely
 try:
     from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
     USE_AGGRID = True
 except ModuleNotFoundError:
-    st.warning("⚠️ streamlit-aggrid is missing. Falling back to default table view.")
+    st.warning("⚠️ 'streamlit-aggrid' not installed. Showing data in default Streamlit table.")
     USE_AGGRID = False
+
+# Example: Load data from Google Sheets (replace 'sheet' with your object)
+try:
+    df = pd.DataFrame(sheet.get_all_records())
+except Exception as e:
+    st.error(f"❌ Failed to load data from Google Sheets: {e}")
+    st.stop()
+
+# Display the data
+if USE_AGGRID:
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_pagination(paginationAutoPageSize=True)
+    gridOptions = gb.build()
+    AgGrid(
+        df,
+        gridOptions=gridOptions,
+        update_mode=GridUpdateMode.SELECTION_CHANGED,
+        data_return_mode=DataReturnMode.AS_INPUT
+    )
+else:
+    st.dataframe(df)
+
 
 # -------------------- CONFIG --------------------
 st.set_page_config(page_title="Inspection App", layout="wide")
@@ -370,21 +394,6 @@ import re
 from io import BytesIO
 from matplotlib import pyplot as plt
 
-import pandas as pd
-
-df = pd.DataFrame(sheet.get_all_records())
-
-if USE_AGGRID:
-    gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_pagination(paginationAutoPageSize=True)
-    gridOptions = gb.build()
-    AgGrid(df, gridOptions=gridOptions, update_mode=GridUpdateMode.SELECTION_CHANGED)
-else:
-    st.dataframe(df)
-
-
-st.title("📋 Safety Inspection Entry & Viewer")
-tabs = st.tabs(["📊 View Records"])
 
 with tabs[0]:
     st.subheader("📊 View & Filter Records")
