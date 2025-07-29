@@ -105,17 +105,24 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------- GOOGLE SHEETS SETUP --------------------
-SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"  # Make sure this is your correct Sheet ID
+SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
 SHEET_NAME = "Sheet1"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
 try:
-    CREDS = Credentials.from_service_account_file("gspread_key.json", scopes=SCOPES)
+    # Load credentials from Streamlit secrets instead of local JSON file
+    CREDS = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=SCOPES
+    )
     gc = gspread.authorize(CREDS)
     sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.info(
-        "Please ensure 'gspread_key.json' is in the root directory and contains valid service account credentials. Also ensure the service account has Editor access to your Google Sheet.")
+        "Please ensure your service account has Editor access to the Google Sheet "
+        "and that `.streamlit/secrets.toml` is correctly configured."
+    )
     st.stop()
 
 columns = [
