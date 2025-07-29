@@ -121,11 +121,22 @@ with tabs[0]:
         df["Status"] = df["Feedback"].apply(classify_feedback)
 
         # Filters
-        start_date, end_date = st.date_input(
-            "📅 Select Date Range",
-            [df["Date of Inspection"].min(), df["Date of Inspection"].max()],
-            key="view_date_range"
-        )
+        import datetime
+
+    if df["Date of Inspection"].notna().any():
+        min_date = df["Date of Inspection"].min().date()
+        max_date = df["Date of Inspection"].max().date()
+    else:
+        today = datetime.date.today()
+        min_date = today - datetime.timedelta(days=30)
+        max_date = today
+    
+    start_date, end_date = st.date_input(
+        "📅 Select Date Range",
+        value=[min_date, max_date],
+        key="view_date_range"
+    )
+
 
         col1, col2 = st.columns(2)
         st.session_state.view_type_filter = col1.multiselect("Type of Inspection", sorted(df["Type of Inspection"].dropna().unique()))
