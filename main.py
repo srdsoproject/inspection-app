@@ -160,9 +160,45 @@ if "view_from" not in st.session_state:
 if "view_to" not in st.session_state:
     st.session_state.view_to = None
 def classify_feedback(feedback):
-    if pd.isna(feedback) or feedback.strip() == "":
+    if not isinstance(feedback, str) or feedback.strip() == "":
         return "Pending"
-    return "Resolved"
+
+    feedback_normalized = normalize(feedback)
+    date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', feedback_normalized))
+
+    pending_keywords = [
+        "will be", "needful", "to be", "pending", "not done", "awaiting",
+        "waiting", "yet to", "next time", "follow up", "tdc", "t d c",
+        "will attend", "will be attended", "scheduled", "reminder",
+        "to inform", "to counsel", "to submit", "to do", "to replace",
+        "remains", "still", "under process", "not yet", "to be done",
+        "will be ensure", "during next", "action will be taken"
+    ]
+
+    resolved_keywords = [
+        "attended", "solved", "submitted", "done", "completed", "informed",
+        "tdc work completed", "replaced", "message given", "msg given", "msg sent",
+        "info shared", "informed to", "communicated", "counseled", "counselled",
+        "handled", "resolved", "action taken", "spoken to", "talked to", "warned",
+        "met", "discussion held", "report sent", "notified", "explained",
+        "work completed", "acknowledged", "visited", "briefed", "guided",
+        "message", "msg", "on ", "working properly", "checked found working",
+        "noted please", "noted", "updated by", "adv to", "counselled the staff",
+        "counselled the", "checked and found", "maintained", "for needful action",
+        "provided at", "in working condition", "is working", "found working",
+        "equipment is working", "item is working",
+        "noted it will be attended during the next primary maintenance", "Operational Feasibility", "will be provided", "Will be supplied shortly"
+    ]
+
+    found_resolved = any(kw in feedback_normalized for kw in resolved_keywords)
+    found_pending = any(kw in feedback_normalized for kw in pending_keywords)
+
+    if found_resolved or date_found:
+        return "Resolved"
+    if found_pending:
+        return "Pending"
+    return "Pending"
+
 
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
