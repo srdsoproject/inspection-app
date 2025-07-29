@@ -22,6 +22,8 @@ import os
 import streamlit as st
 
 st.write("DEBUG: Keys available in secrets →", list(st.secrets.keys()))
+st.write("DEBUG: Keys in secrets →", list(st.secrets.keys()))
+
 
 
 def login(email, password):
