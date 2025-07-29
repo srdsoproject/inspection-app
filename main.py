@@ -20,13 +20,14 @@ import os
 import streamlit as st
 import pandas as pd
 
-# Try importing AgGrid safely
 try:
     from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
     USE_AGGRID = True
 except ModuleNotFoundError:
-    st.warning("⚠️ 'streamlit-aggrid' not installed. Showing data in default Streamlit table.")
+    import streamlit as st
+    st.warning("⚠️ 'streamlit-aggrid' not installed. Falling back to default table display.")
     USE_AGGRID = False
+
 
 # Example: Load data from Google Sheets (replace 'sheet' with your object)
 try:
