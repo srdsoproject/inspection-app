@@ -1,4 +1,4 @@
-'''import streamlit as st
+import streamlit as st
 import pandas as pd
 from datetime import date
 from io import BytesIO
@@ -65,13 +65,13 @@ SCOPES = [
 ]
 
 try:
-    # Get the service account info from Streamlit secrets
-    service_account_info = dict(st.secrets["gcp_service_account"])
+    # Copy dict from secrets
+    service_account_info = st.secrets["gcp_service_account"].to_dict()
     
-    # Fix private key formatting (replace literal "\n" with newlines)
+    # Fix private key formatting (convert literal "\n" into real newlines)
     service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
     
-    # Build credentials
+    # Create credentials
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
 
@@ -1217,12 +1217,5 @@ with tabs[0]:
             )
 
             st.markdown("### 📄 Preview of Filtered Records")
-            st.dataframe(export_df, use_container_width=True, hide_index=True)'''
-import streamlit as st
+            st.dataframe(export_df, use_container_width=True, hide_index=True)
 
-st.write("Type of secret:", type(st.secrets["gcp_service_account"]))
-st.write("Keys:", list(st.secrets["gcp_service_account"].keys()))
-
-private_key = st.secrets["gcp_service_account"]["private_key"]
-st.text("First 100 chars of private_key:")
-st.text(private_key[:100].replace("\n", "\\n"))
