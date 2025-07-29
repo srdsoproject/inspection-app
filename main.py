@@ -17,6 +17,13 @@ import gspread
 import datetime
 import re
 import os
+try:
+    from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
+    USE_AGGRID = True
+except ModuleNotFoundError:
+    st.warning("⚠️ streamlit-aggrid not installed. Falling back to simple tables.")
+    USE_AGGRID = False
+
 # -------------------- CONFIG --------------------
 st.set_page_config(page_title="Inspection App", layout="wide")
 
