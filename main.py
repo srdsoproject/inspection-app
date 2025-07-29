@@ -1,4 +1,4 @@
-import streamlit as st
+'''import streamlit as st
 import pandas as pd
 from datetime import date
 from io import BytesIO
@@ -1217,4 +1217,12 @@ with tabs[0]:
             )
 
             st.markdown("### 📄 Preview of Filtered Records")
-            st.dataframe(export_df, use_container_width=True, hide_index=True)
+            st.dataframe(export_df, use_container_width=True, hide_index=True)'''
+import streamlit as st
+
+st.write("Type of secret:", type(st.secrets["gcp_service_account"]))
+st.write("Keys:", list(st.secrets["gcp_service_account"].keys()))
+
+private_key = st.secrets["gcp_service_account"]["private_key"]
+st.text("First 100 chars of private_key:")
+st.text(private_key[:100].replace("\n", "\\n"))
