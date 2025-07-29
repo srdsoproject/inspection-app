@@ -1,50 +1,38 @@
+# ==================== CONFIG ====================
 import streamlit as st
+
+# ✅ Must be the first Streamlit command
+st.set_page_config(page_title="Safety Inspection App", layout="wide")
+
 import gspread
 from google.oauth2.service_account import Credentials
 import plotly.graph_objects as go
 from dateutil import parser
-import re
-import os
+import importlib.util
 
-# Try AgGrid, fallback if missing
-try:
-    from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
-    aggrid_available = True
-except ImportError:
-    st.warning("⚠️ 'streamlit-aggrid' not installed. Falling back to default table display.")
-    aggrid_available = False
-
-# ✅ Set page config ONCE
-st.set_page_config(page_title="Safety Inspection App", layout="wide")
-
-# --- Load Users from secrets.toml ---
-try:
-    USERS = st.secrets["users"]
-except KeyError:
-    st.error("⚠️ No users found in secrets.toml — please check your [[users]] block.")
-    USERS = []
-
-def login(email, password):
-    for user in USERS:
-        if user["email"] == email and user["password"] == password:
-            return user
-    return None
-
-# --- Session State ---
+# ==================== LOGIN HANDLING ====================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user = {}
 
-# --- Login UI ---
+def login(email, password):
+    try:
+        USERS = st.secrets["users"]
+        for user in USERS:
+            if user["email"] == email and user["password"] == password:
+                return user
+    except Exception:
+        st.warning("⚠️ Could not load users. Check [[users]] block in secrets.toml.")
+    return None
+
 if not st.session_state.logged_in:
-    col1, col2, col3 = st.columns([1,2,1])
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.title("🔐 Login to Safety Inspection App")
         with st.form("login_form", clear_on_submit=True):
             email = st.text_input("📧 Email")
             password = st.text_input("🔒 Password", type="password")
             submitted = st.form_submit_button("Login")
-
             if submitted:
                 user = login(email, password)
                 if user:
@@ -56,7 +44,7 @@ if not st.session_state.logged_in:
                     st.error("❌ Invalid email or password.")
     st.stop()
 
-# --- Google Sheets Setup ---
+# ==================== GOOGLE SHEETS CONNECTION ====================
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -77,7 +65,7 @@ except Exception as e:
     st.error(f"❌ Failed to load data from Google Sheets: {e}")
     st.stop()
 
-# --- Sidebar: User Info & Logout ---
+# ==================== SIDEBAR ====================
 st.sidebar.markdown(f"👤 Logged in as: **{st.session_state.user.get('name')}**")
 st.sidebar.markdown(f"📧 {st.session_state.user.get('email')}")
 if st.sidebar.button("🚪 Logout"):
@@ -85,23 +73,23 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state.user = {}
     st.rerun()
 
-# --- Main App Content ---
-columns = [
-    "Type of Inspection", "Location", "Month", "Date of Inspection",
-    "Head", "Sub Head", "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
-]
-
+# ==================== DATA DISPLAY ====================
 try:
     data = sheet.get_all_records()
-    if aggrid_available:
-        gb = GridOptionsBuilder.from_dataframe(pd.DataFrame(data))
+
+    if importlib.util.find_spec("streamlit_aggrid") is not None:
+        from streamlit_aggrid import AgGrid, GridOptionsBuilder
+        import pandas as pd
+
+        df = pd.DataFrame(data)
+        gb = GridOptionsBuilder.from_dataframe(df)
         gb.configure_pagination()
-        gb.configure_side_bar()
-        gridOptions = gb.build()
-        AgGrid(pd.DataFrame(data), gridOptions=gridOptions,
-               update_mode=GridUpdateMode.SELECTION_CHANGED,
-               data_return_mode=DataReturnMode.FILTERED)
+        grid_options = gb.build()
+        AgGrid(df, gridOptions=grid_options)
     else:
-        st.dataframe(pd.DataFrame(data))
+        st.warning("⚠️ 'streamlit-aggrid' not installed. Falling back to default table display.")
+        import pandas as pd
+        df = pd.DataFrame(data)
+        st.dataframe(df)
 except Exception as e:
-    st.error(f"⚠️ Could not load data: {e}")
+    st.error(f"❌ Could not load data: {e}")
