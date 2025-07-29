@@ -55,9 +55,10 @@ if not st.session_state.logged_in:
     st.stop()
 
 # --- Google Sheets Setup ---
+import json
 import gspread
-from google.oauth2.service_account import Credentials
 import streamlit as st
+from google.oauth2.service_account import Credentials
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -65,13 +66,12 @@ SCOPES = [
 ]
 
 try:
-    # Copy dict from secrets
-    service_account_info = st.secrets["gcp_service_account"].to_dict()
+    # Force conversion to a normal dict
+    service_account_info = json.loads(st.secrets["gcp_service_account"].to_json())
     
-    # Fix private key formatting (convert literal "\n" into real newlines)
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+    # Ensure private key has real newlines
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
     
-    # Create credentials
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
 
@@ -79,9 +79,12 @@ try:
     SHEET_NAME = "Sheet1"
     sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
+    st.success("✅ Connected to Google Sheets!")
+
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
+
 
 # APP UI STARTS HERE
 st.set_page_config(page_title="Safety Inspection App", layout="wide")
