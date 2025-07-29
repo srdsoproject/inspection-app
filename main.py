@@ -55,19 +55,34 @@ if not st.session_state.logged_in:
     st.stop()
 
 # --- Google Sheets Setup ---
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+import gspread
+from google.oauth2.service_account import Credentials
+import streamlit as st
+
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
 try:
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"], scopes=SCOPES
-    )
+    # Get the service account info from Streamlit secrets
+    service_account_info = dict(st.secrets["gcp_service_account"])
+    
+    # Fix private key formatting (replace literal "\n" with newlines)
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+    
+    # Build credentials
+    creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
+
     SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
     SHEET_NAME = "Sheet1"
     sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
+
 # APP UI STARTS HERE
 st.set_page_config(page_title="Safety Inspection App", layout="wide")
 
