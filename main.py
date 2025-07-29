@@ -195,9 +195,68 @@ def load_data():
         st.error(f"Unexpected error loading data: {e}")
         return pd.DataFrame(columns=columns)
 
-def apply_common_filters(df, prefix=""):
-    return df
+def match_exact(value_list, cell_value):
+    """Checks if any value in value_list exactly matches a comma-separated item in cell_value."""
+    if not isinstance(cell_value, str):
+        return False
+    cell_items = [item.strip() for item in cell_value.split(',')]
+    return any(val == item for val in value_list for item in cell_items)
 
+
+def apply_common_filters(df, prefix=""):
+    """Applies common filters (Inspection By, Action By, Date Range) to a DataFrame.
+    Filters are read from st.session_state using the given prefix."""
+    with st.expander("🔍 Apply Additional Filters", expanded=True):
+        col4, col5 = st.columns(2)
+        # Widget creation. The 'key' automatically handles updating session_state.
+        col4.multiselect(
+            "Inspection By",
+            INSPECTION_BY_LIST[1:],
+            default=st.session_state.get(prefix + "insp", []),
+            key=prefix + "insp"
+        )
+        col5.multiselect(
+            "Action By",
+            ACTION_BY_LIST[1:],
+            default=st.session_state.get(prefix + "action", []),
+            key=prefix + "action"
+        )
+
+        col6, col7 = st.columns(2)
+        col6.date_input(
+            "From Date",
+            value=st.session_state.get(prefix + "from", None),
+            key=prefix + "from"
+        )
+        col7.date_input(
+            "To Date",
+            value=st.session_state.get(prefix + "to", None),
+            key=prefix + "to"
+        )
+
+    df_filtered = df.copy()
+
+    # Apply filters based on session state values
+    if st.session_state.get(prefix + "insp"):
+        df_filtered = df_filtered[
+            df_filtered["Inspection By"].apply(lambda x: match_exact(st.session_state[prefix + "insp"], x))]
+    if st.session_state.get(prefix + "action"):
+        df_filtered = df_filtered[
+            df_filtered["Action By"].apply(lambda x: match_exact(st.session_state[prefix + "action"], x))]
+
+    # Convert 'Date of Inspection' to datetime for comparison if it exists
+    if "Date of Inspection" in df_filtered.columns:
+        df_filtered["Date_dt"] = pd.to_datetime(df_filtered["Date of Inspection"], errors="coerce", format="%d.%m.%y")
+
+        if st.session_state.get(prefix + "from"):
+            df_filtered = df_filtered[df_filtered["Date_dt"] >= pd.to_datetime(st.session_state[prefix + "from"])]
+        if st.session_state.get(prefix + "to"):
+            df_filtered = df_filtered[df_filtered["Date_dt"] <= pd.to_datetime(st.session_state[prefix + "to"])]
+
+        # Drop the temporary datetime column
+        df_filtered = df_filtered.drop(columns=["Date_dt"], errors='ignore')
+
+    return df_filtered
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
 
