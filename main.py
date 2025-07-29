@@ -188,8 +188,7 @@ def classify_feedback(feedback):
         "noted it will be attended during the next primary maintenance", "Operational Feasibility", "will be provided", "Will be supplied shortly"
     ]
 
-    found_resolved = any(kw in feedback_normalized for kw in resolved_keywords)
-    found_pending = any(kw in feedback_normalized for kw in pending_keywords)
+   
 
     if found_resolved or date_found:
         return "Resolved"
