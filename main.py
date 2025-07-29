@@ -12,8 +12,17 @@ SCOPES = [
 try:
     service_account_info = dict(st.secrets["gcp_service_account"])
 
+    # 🔍 DEBUG PRIVATE KEY
     if "private_key" in service_account_info:
-        service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+        pk = service_account_info["private_key"]
+        st.write("DEBUG: Private key length →", len(pk))
+        st.write("DEBUG: First 50 chars →", pk[:50])
+        st.write("DEBUG: Last 50 chars →", pk[-50:])
+        st.write("DEBUG: Contains literal \\n?", "\\n" in pk)
+
+        # Fix escaping if needed
+        if "\\n" in pk:
+            service_account_info["private_key"] = pk.encode().decode("unicode_escape")
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
