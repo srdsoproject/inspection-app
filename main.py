@@ -21,12 +21,20 @@ import os
 
 import streamlit as st
 
-# Convert the TOML array of tables ([[users]]) into a list of dicts
+# Load users from secrets
 try:
-    USERS = list(st.secrets["users"].values())
+    USERS = st.secrets["users"]
+    st.write("DEBUG: Users loaded →", USERS)  # remove after testing
 except Exception:
-    st.error("No users found in secrets.toml — please check your [[users]] block.")
+    st.error("⚠️ Could not load users. Check [[users]] block in secrets.toml.")
     st.stop()
+
+def login(email, password):
+    for user in USERS:
+        if user["email"] == email and user["password"] == password:
+            return user
+    return None
+
 
 
 
