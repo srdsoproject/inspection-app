@@ -170,7 +170,11 @@ def normalize(text: str) -> str:
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)  # remove multiple spaces
     return text.strip()
-
+def normalize(text):
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s/]', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
 def classify_feedback(feedback):
     if not isinstance(feedback, str) or feedback.strip() == "":
         return "Pending"
