@@ -66,19 +66,7 @@ SCOPES = [
 
 try:
     service_account_info = st.secrets["gcp_service_account"].to_dict()
-
-    # Fix newlines and strip hidden characters
-    pk = service_account_info["private_key"].replace("\\n", "\n").strip()
-
-    # Ensure no hidden characters
-    pk = "\n".join(line.strip() for line in pk.splitlines())
-
-    service_account_info["private_key"] = pk
-
-    # Debug again
-    st.write("First line:", pk.splitlines()[0])
-    st.write("Last line:", pk.splitlines()[-1])
-    st.write("Total lines:", len(pk.splitlines()))
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
@@ -92,7 +80,6 @@ try:
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
-
 
 
 # APP UI STARTS HERE
