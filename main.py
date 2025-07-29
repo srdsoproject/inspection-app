@@ -75,14 +75,41 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state.user = {}
     st.rerun()
 
-# ---------- HELPER FUNCTIONS ----------
+# ---------- HELPER FUNCTIONS & CONSTANTS ----------
+
+# Station, Footplate & Gate Lists
+station_list = [
+    'BRB', 'MLM', 'BGVN', 'JNTR', 'PRWD', 'WSB', 'PPJ', 'JEUR', 'KEM', 'BLNI', 'DHS', 'KWV', 'WDS',
+    'MA', 'AAG', 'MKPT', 'MO', 'MVE', 'PK', 'BALE', "SUR", 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'DUD',
+    'KUI', 'GDGN', 'GUR', 'HHD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'ARAG',
+    'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB', 'SEI', 'BTW',
+    'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR'
+]
+
+footplate_list = [
+    "SUR-DD", "SUR-WADI", "LUR-KWV", 'KWV-MRJ',
+    'DD-SUR', 'WADI-SUR', 'KWV-LUR', 'MRJ-KWV'
+]
+
+gate_list = [
+    'LC-19', 'LC-22A', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37',
+    'LC-40', 'LC-41', 'LC-43', 'LC-44', 'LC-45', 'LC-46C', 'LC-54', 'LC-61', 'LC-66', 'LC-74',
+    'LC-76', 'LC-78', 'LC-82', 'LC-1', 'LC-60A', 'LC-1 TLT ZCL', 'LC-1 ACC', 'LC-2 ACC', 'LC-91',
+    'LC-22', 'LC-24', 'LC-31', 'LC-32', 'LC-49', 'LC-70', 'LC-10', 'LC-34', 'LC-36', 'LC-44',
+    'LC-47', 'LC-55', 'LC-59', 'LC-2', 'LC-4', 'LC-5', 'LC-6', 'LC-57', 'LC-62', 'LC-66', 'LC-70',
+    'LC-39', 'LC-2/C', 'LC-6/C', 'LC-10', 'LC-11', 'LC-15/C', 'LC-21', 'LC-26-A', 'LC-34', 'LC-36',
+    'LC-44', 'LC-47', 'LC-55', 'LC-57', 'LC-59', 'LC-60', 'LC-61'
+]
+
+# Head & Subhead for inspections
 HEAD_LIST = ["", "ELECT/TRD", "ELECT/G", "ELECT/TRO", "SIGNAL & TELECOM", "OPTG",
              "ENGINEERING", "COMMERCIAL", "C&W", "WORKSITE INSPECTION"]
+
 SUBHEAD_LIST = {
     "ELECT/TRD": ["", "T/W WAGON", "TSS/SP/SSP", "OHE SECTION", "OHE STATION", "MISC"],
     "ELECT/G": ["", "TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC"],
-    "ELECT/TRO": ["", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE", "PR RELATED",
-                  "CMS", "MISC"],
+    "ELECT/TRO": ["", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE",
+                  "PR RELATED", "CMS", "MISC"],
     "WORKSITE INSPECTION": ["", "PWAY WORKS", "CIVIL WORKS", "MISC"],
     "SIGNAL & TELECOM": ["", "SIGNAL PUTBACK/BLANK", "OTHER SIGNAL FAILURE", "BPAC", "GATE", "RELAY ROOM",
                          "STATION(VDU/BLOCK INSTRUMENT)", "MISC", "CCTV", "DISPLAY BOARDS"],
@@ -90,9 +117,23 @@ SUBHEAD_LIST = {
              "SM OFFICE DEFICIENCIES", "MISC"],
     "ENGINEERING": ["", "ROUGH RIDING", "TRACK NEEDS ATTENTION", "MISC"],
     "COMMERCIAL": ["", "TICKETING RELATED/MACHINE", "IRCTC", "MISC"],
-    "C&W": ["", "BRAKE BINDING", 'WHEEL DEFECT', 'TRAIN PARTING', 'PASSENGER AMENITIES', 'AIR PRESSURE LEAKAGE',
-            'DAMAGED UNDER GEAR PARTS', 'MISC'],
+    "C&W": ["", "BRAKE BINDING", 'WHEEL DEFECT', 'TRAIN PARTING', 'PASSENGER AMENITIES',
+            'AIR PRESSURE LEAKAGE', 'DAMAGED UNDER GEAR PARTS', 'MISC'],
 }
+
+INSPECTION_BY_LIST = [""] + [
+    'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
+    'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC',
+    'DME,DEE/TRD', 'DFM', 'DSTE/HQ', 'DSTE/KLBG', 'ADEN/T/SUR', 'ADEN/W/SUR', 'ADEN/KWV',
+    'ADEN/PVR', 'ADEN/LUR', 'ADEN/KLBG', 'ADSTE/SUR', 'ADSTE/I/KWV', 'ADSTE/II/KWV',
+    'ADME/SUR', 'AOM/GD', 'AOM/GEN', 'ACM/Cog', 'ACM/TC', 'ACM/GD', 'APO/GEN', 'APO/WEL',
+    'ADFM/I', 'ADFMII', 'ASC', 'ADSO'
+]
+
+ACTION_BY_LIST = [""] + [
+    'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
+    'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC'
+]
 
 def classify_feedback(feedback):
     if pd.isna(feedback) or feedback.strip() == "":
