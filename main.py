@@ -134,7 +134,31 @@ ACTION_BY_LIST = [""] + [
     'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
     'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC'
 ]
+# -------------------- SESSION STATE INIT --------------------
+# Initialize session state variables for filters if they don't exist
+# These ensure filters persist across reruns.
+if "head" not in st.session_state:
+    st.session_state.head = ""
+if "sub_head" not in st.session_state:
+    st.session_state.sub_head = ""
 
+# Initialize filter states for "View Records" tab
+if "view_type_filter" not in st.session_state:
+    st.session_state.view_type_filter = []
+if "view_location_filter" not in st.session_state:
+    st.session_state.view_location_filter = ""
+if "view_head_filter" not in st.session_state:
+    st.session_state.view_head_filter = []
+if "view_sub_filter" not in st.session_state:
+    st.session_state.view_sub_filter = ""
+if "view_insp" not in st.session_state:
+    st.session_state.view_insp = []
+if "view_action" not in st.session_state:
+    st.session_state.view_action = []
+if "view_from" not in st.session_state:
+    st.session_state.view_from = None
+if "view_to" not in st.session_state:
+    st.session_state.view_to = None
 def classify_feedback(feedback):
     if pd.isna(feedback) or feedback.strip() == "":
         return "Pending"
