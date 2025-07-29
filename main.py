@@ -58,10 +58,6 @@ if not st.session_state.logged_in:
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit as st
-pk = service_account_info["private_key"]
-st.write("Key starts with:", pk.splitlines()[0])
-st.write("Key ends with:", pk.splitlines()[-1])
-st.write("Total lines in key:", len(pk.splitlines()))
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -71,14 +67,16 @@ SCOPES = [
 try:
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
-    # DEBUG: see how many slashes we need to replace
-    pk = service_account_info["private_key"]
-    st.text("First 50 chars raw: " + pk[:50])
-    
-    # If you see "\n" → use 1 slash
-    # If you see "\\n" → use 2 slashes
-    service_account_info["private_key"] = pk.replace("\\n", "\n").replace("\\\\n", "\n").strip()
+    # Ensure private key newlines are real
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
 
+    # Debug: check key integrity
+    pk = service_account_info["private_key"]
+    st.write("Key starts with:", pk.splitlines()[0])
+    st.write("Key ends with:", pk.splitlines()[-1])
+    st.write("Total lines in key:", len(pk.splitlines()))
+
+    # Try to build credentials
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
 
@@ -91,6 +89,7 @@ try:
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
+
 
 
 # APP UI STARTS HERE
