@@ -19,46 +19,21 @@ import datetime
 import re
 import os
 
-# LOGIN SYSTEM (STEP 1)
-# -------------------- USERS --------------------
-USERS = [
-    {"name": "Raj", "email": "admin@example.com", "password": "123"},
-    {"name": "user", "email": "a", "password": "123"},
-    {"name": "DRM/SUR", "email": "drm@sur.railnet.gov.in", "password": "123"},
-    {"name": "ADRM/SUR", "email": "adrm@sur.railnet.gov.in", "password": "123"},
-    {"name": "Sr. DEN/CO/SUR", "email": "srdencosur@gmail.com", "password": "123"},
-    {"name": "Sr. DEN/S/SUR", "email": "denssur@gmail.com", "password": "123"},
-    {"name": "Sr. DEN/N/SUR", "email": "dennsur@gmail.com", "password": "123"},
-    {"name": "Sr. DEN/C/SUR", "email": "dencsur2017@gmail.com", "password": "123"},
-    {"name": "Sr. DOM/SUR", "email": "sursr.dom@gmail.com", "password": "123"},
-    {"name": "Sr. DME/SUR", "email": "srdme@sur.railnet.gov.in", "password": "123"},
-    {"name": "DME/SUR", "email": "dme@surrailnet.gov.in", "password": "123"},
-    {"name": "Sr. DEE/G/SUR", "email": "sr.deegsurcrly@gmail.com", "password": "123"},
-    {"name": "Sr. DEE/TRD/SUR", "email": "srdeetrdsurcrly@gmail.com", "password": "123"},
-    {"name": "Sr. DSTE/SUR", "email": "srdstem@sur.railnet.gov.in", "password": "123"},
-    {"name": "Sr. DCM/SUR", "email": "srdcm@sur.railnet.gov.in", "password": "123"},
-    {"name": "Sr. DMM/SUR", "email": "dmm@sur.railnet.gov.in", "password": "123"},
-    {"name": "DMM/SUR", "email": "admm@sur.railnet.gov.in", "password": "123"},
-    {"name": "Sr. DPO/SUR", "email": "srdposur@gmail.com", "password": "123"},
-    {"name": "ADME I/SUR", "email": "adme1@sur.railnet.gov.in", "password": "123"},
-    {"name": "ADME II/SUR", "email": "adme2@sur.railnet.gov.in", "password": "123"},
-]
-
+USERS = st.secrets["users"]
 
 def login(email, password):
     for user in USERS:
         if user["email"].lower() == email.lower() and user["password"] == password:
-            return user  # return full user info
+            return user
     return None
 
-
-# -------------------- SESSION INIT --------------------
+# --- Session State Init ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user" not in st.session_state:
     st.session_state.user = {}
 
-# -------------------- LOGIN UI --------------------
+# --- Login UI ---
 if not st.session_state.logged_in:
     st.set_page_config(page_title="Login | Inspection App", layout="centered")
     st.title("🔐 Login to Safety Inspection App")
@@ -79,6 +54,20 @@ if not st.session_state.logged_in:
                 st.error("❌ Invalid email or password.")
     st.stop()
 
+# --- Google Sheets Setup ---
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+
+try:
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=SCOPES
+    )
+    gc = gspread.authorize(creds)
+    SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
+    SHEET_NAME = "Sheet1"
+    sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+except Exception as e:
+    st.error(f"Error connecting to Google Sheets: {e}")
+    st.stop()
 # APP UI STARTS HERE
 st.set_page_config(page_title="Safety Inspection App", layout="wide")
 
