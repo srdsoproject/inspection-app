@@ -17,11 +17,13 @@ import gspread
 import datetime
 import re
 import os
+import streamlit as st
+
 try:
     from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
     USE_AGGRID = True
 except ModuleNotFoundError:
-    st.warning("⚠️ streamlit-aggrid not installed. Falling back to simple tables.")
+    st.warning("⚠️ streamlit-aggrid is missing. Falling back to default table view.")
     USE_AGGRID = False
 
 # -------------------- CONFIG --------------------
@@ -368,6 +370,17 @@ import re
 from io import BytesIO
 from matplotlib import pyplot as plt
 
+import pandas as pd
+
+df = pd.DataFrame(sheet.get_all_records())
+
+if USE_AGGRID:
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_pagination(paginationAutoPageSize=True)
+    gridOptions = gb.build()
+    AgGrid(df, gridOptions=gridOptions, update_mode=GridUpdateMode.SELECTION_CHANGED)
+else:
+    st.dataframe(df)
 
 
 st.title("📋 Safety Inspection Entry & Viewer")
