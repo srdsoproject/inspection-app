@@ -71,7 +71,7 @@ st.sidebar.markdown(f"📧 {st.session_state.user['email']}")
 if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
     st.session_state.user = {}
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------- LOAD DATA ----------
 try:
