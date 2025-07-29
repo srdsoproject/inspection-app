@@ -19,12 +19,15 @@ import datetime
 import re
 import os
 
-import toml
+import streamlit as st
 
-with open(".streamlit/secrets.toml") as f:
-    secrets_dict = toml.load(f)
+# Convert the TOML array of tables ([[users]]) into a list of dicts
+try:
+    USERS = list(st.secrets["users"].values())
+except Exception:
+    st.error("No users found in secrets.toml — please check your [[users]] block.")
+    st.stop()
 
-USERS = secrets_dict["users"]
 
 
 def login(email, password):
