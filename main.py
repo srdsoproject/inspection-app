@@ -76,11 +76,22 @@ if st.sidebar.button("🚪 Logout"):
     st.rerun()
 
 # ---------- HELPER FUNCTIONS ----------
-HEAD_LIST = ["", "Safety", "Engineering", "Operations"]  # example values
+HEAD_LIST = ["", "ELECT/TRD", "ELECT/G", "ELECT/TRO", "SIGNAL & TELECOM", "OPTG",
+             "ENGINEERING", "COMMERCIAL", "C&W", "WORKSITE INSPECTION"]
 SUBHEAD_LIST = {
-    "Safety": ["Fire", "Electrical"],
-    "Engineering": ["Bridges", "Tracks"],
-    "Operations": ["Signaling", "Crew"]
+    "ELECT/TRD": ["", "T/W WAGON", "TSS/SP/SSP", "OHE SECTION", "OHE STATION", "MISC"],
+    "ELECT/G": ["", "TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC"],
+    "ELECT/TRO": ["", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE", "PR RELATED",
+                  "CMS", "MISC"],
+    "WORKSITE INSPECTION": ["", "PWAY WORKS", "CIVIL WORKS", "MISC"],
+    "SIGNAL & TELECOM": ["", "SIGNAL PUTBACK/BLANK", "OTHER SIGNAL FAILURE", "BPAC", "GATE", "RELAY ROOM",
+                         "STATION(VDU/BLOCK INSTRUMENT)", "MISC", "CCTV", "DISPLAY BOARDS"],
+    "OPTG": ["", "SWR/CSR/CSL/TWRD", "COMPETENCY RELATED", "STATION RECORDS", "STATION DEFICIENCIES",
+             "SM OFFICE DEFICIENCIES", "MISC"],
+    "ENGINEERING": ["", "ROUGH RIDING", "TRACK NEEDS ATTENTION", "MISC"],
+    "COMMERCIAL": ["", "TICKETING RELATED/MACHINE", "IRCTC", "MISC"],
+    "C&W": ["", "BRAKE BINDING", 'WHEEL DEFECT', 'TRAIN PARTING', 'PASSENGER AMENITIES', 'AIR PRESSURE LEAKAGE',
+            'DAMAGED UNDER GEAR PARTS', 'MISC'],
 }
 
 def classify_feedback(feedback):
