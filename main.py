@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import gspread
 from google.oauth2.service_account import Credentials
-from streamlit_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
+
 import re
 from dateutil import parser
 import os
