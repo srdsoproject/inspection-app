@@ -69,7 +69,7 @@ try:
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
     # Replace literal "\n" with real newlines
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\\\n", "\n").strip()
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
