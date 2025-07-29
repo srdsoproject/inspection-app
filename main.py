@@ -21,13 +21,8 @@ import os
 
 import streamlit as st
 
-# Load users from secrets
-try:
-    USERS = st.secrets["users"]
-    st.write("DEBUG: Users loaded →", USERS)  # remove after testing
-except Exception:
-    st.error("⚠️ Could not load users. Check [[users]] block in secrets.toml.")
-    st.stop()
+st.write("DEBUG: Keys available in secrets →", list(st.secrets.keys()))
+
 
 def login(email, password):
     for user in USERS:
