@@ -163,9 +163,7 @@ def classify_feedback(feedback):
     if not isinstance(feedback, str) or feedback.strip() == "":
         return "Pending"
 
-    feedback_normalized = normalize(feedback)
-    date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', feedback_normalized))
-
+   
     pending_keywords = [
         "will be", "needful", "to be", "pending", "not done", "awaiting",
         "waiting", "yet to", "next time", "follow up", "tdc", "t d c",
