@@ -31,14 +31,6 @@ def login(email, password):
     return None
 
 
-
-
-def login(email, password):
-    for user in USERS:
-        if user["email"].lower() == email.lower() and user["password"] == password:
-            return user
-    return None
-
 # --- Session State Init ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
