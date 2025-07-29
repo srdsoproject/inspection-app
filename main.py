@@ -291,10 +291,11 @@ def load_data():
         return pd.DataFrame(columns=columns)
 
 
-def apply_common_filters(df, prefix=""):
-    return df  # placeholder for now, extend if you have common filters
 
 # ---------- MAIN APP ----------
+st.title("📋 Safety Inspection Entry & Viewer")
+tabs = st.tabs(["📊 View Records"])
+
 st.title("📋 Safety Inspection Entry & Viewer")
 tabs = st.tabs(["📊 View Records"])
 
@@ -308,39 +309,27 @@ with tabs[0]:
         df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], format="%d.%m.%y", errors="coerce")
         df["_original_sheet_index"] = df.index
 
-        for col in ["Type of Inspection", "Location", "Head", "Sub Head", 
-                    "Deficiencies Noted", "Inspection By", "Action By", "Feedback"]:
+        for col in ["Type of Inspection", "Location", "Head", "Sub Head", "Deficiencies Noted", "Inspection By", "Action By", "Feedback"]:
             if col not in df.columns:
                 df[col] = ""
 
         df["Status"] = df["Feedback"].apply(classify_feedback)
 
         # Filters
-        import datetime
-
-        if df["Date of Inspection"].notna().any():
-            min_date = df["Date of Inspection"].min().date()
-            max_date = df["Date of Inspection"].max().date()
-        else:
-            today = datetime.date.today()
-            min_date = today - datetime.timedelta(days=30)
-            max_date = today
-        
         start_date, end_date = st.date_input(
             "📅 Select Date Range",
-            value=[min_date, max_date],
+            [df["Date of Inspection"].min(), df["Date of Inspection"].max()],
             key="view_date_range"
         )
 
-
         col1, col2 = st.columns(2)
-        st.session_state.view_type_filter = col1.multiselect("Type of Inspection", sorted(df["Type of Inspection"].dropna().unique()))
-        st.session_state.view_location_filter = col2.selectbox("Location", [""] + sorted(df["Location"].dropna().unique()))
+        col1.multiselect("Type of Inspection", sorted(df["Type of Inspection"].dropna().unique()), key="view_type_filter")
+        col2.selectbox("Location", [""] + sorted(df["Location"].dropna().unique()), key="view_location_filter")
 
         col3, col4 = st.columns(2)
-        st.session_state.view_head_filter = col3.multiselect("Head", HEAD_LIST[1:])
+        col3.multiselect("Head", HEAD_LIST[1:], key="view_head_filter")
         sub_opts = sorted({s for h in st.session_state.view_head_filter for s in SUBHEAD_LIST.get(h, [])})
-        st.session_state.view_sub_filter = col4.selectbox("Sub Head", [""] + sub_opts)
+        col4.selectbox("Sub Head", [""] + sub_opts, key="view_sub_filter")
 
         selected_status = st.selectbox("🔘 Status", ["All", "Pending", "Resolved"], key="view_status_filter")
 
@@ -349,6 +338,7 @@ with tabs[0]:
             (df["Date of Inspection"] >= pd.to_datetime(start_date)) &
             (df["Date of Inspection"] <= pd.to_datetime(end_date))
         ]
+
         if st.session_state.view_type_filter:
             filtered = filtered[filtered["Type of Inspection"].isin(st.session_state.view_type_filter)]
         if st.session_state.view_location_filter:
@@ -366,8 +356,7 @@ with tabs[0]:
         filtered["User Feedback/Remark"] = ""
 
         st.write(f"🔹 Showing {len(filtered)} record(s) from **{start_date.strftime('%d.%m.%Y')}** to **{end_date.strftime('%d.%m.%Y')}**")
-
-        # Summary Counts
+        # Summary Counts Display
         pending_count = (filtered["Status"] == "Pending").sum()
         resolved_count = (filtered["Status"] == "Resolved").sum()
         total_count = len(filtered)
@@ -380,49 +369,95 @@ with tabs[0]:
         if not filtered.empty:
             summary = filtered["Status"].value_counts().reindex(["Pending", "Resolved"], fill_value=0).reset_index()
             summary.columns = ["Status", "Count"]
-            summary.loc[len(summary.index)] = ["Total", summary["Count"].sum()]
 
-            # Chart + Table
+            # Add total row to the table
+            total_count = summary["Count"].sum()
+            summary.loc[len(summary.index)] = ["Total", total_count]
+
+            # Title Info
+            dr = f"{start_date.strftime('%d-%m-%Y')} to {end_date.strftime('%d-%m-%Y')}"
+            heads = ", ".join(st.session_state.view_head_filter) if st.session_state.view_head_filter else "All Heads"
+
+            # Matplotlib chart and table
             fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-            axes[0].pie(
+
+            wedges, texts, autotexts = axes[0].pie(
                 summary.loc[summary["Status"] != "Total", "Count"],
                 labels=summary.loc[summary["Status"] != "Total", "Status"],
                 autopct=lambda pct: f"{pct:.1f}%\n({int(round(pct / 100 * total_count))})",
                 startangle=90,
                 colors=["#1f77b4", "#7fc6f2"]
             )
-            axes[0].set_title("")
+            axes[0].set_title("", fontsize=12)
 
+            # Table on the right
             axes[1].axis('off')
             table_data = [["Status", "Count"]] + summary.values.tolist()
+
+            table_data.append(["Date Range", dr])
+
+            # Type of Inspection(s)
+            type_filter = st.session_state.view_type_filter
+            type_display = ", ".join(type_filter) if type_filter else "All Types"
+            table_data.append(["Type of Inspection", type_display])
+
+            # Location
+            location_display = st.session_state.view_location_filter or "All Locations"
+            table_data.append(["Location", location_display])
+
+            # Head(s)
+            table_data.append(["Heads", heads])
+
+            # Sub Head (if selected)
+            if st.session_state.view_sub_filter:
+                table_data.append(["Sub Head", st.session_state.view_sub_filter])
+
+            # Status Filter (if selected)
+            if selected_status != "All":
+                table_data.append(["Filtered Status", selected_status])
+
             tbl = axes[1].table(cellText=table_data, loc='center')
             tbl.auto_set_font_size(False)
             tbl.set_fontsize(10)
             tbl.scale(1, 1.6)
 
             plt.tight_layout(rect=[0, 0.05, 1, 0.90])
+
+            # Title & context in figure
             fig.text(0.5, 0.96, "📈 Pending vs Resolved Records", ha='center', fontsize=14, fontweight='bold')
+            fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}", ha='center', fontsize=10, color='gray')
 
             buf = BytesIO()
             plt.savefig(buf, format="png", dpi=200)
             buf.seek(0)
             plt.close()
 
-            st.image(buf, use_container_width=True)
+            st.image(buf, caption=None, use_container_width=True)
 
-            st.download_button("📥 Download Graph + Table (PNG)", buf, "status_summary.png", "image/png")
+            # Download buttons
+            st.download_button(
+                "📥 Download Graph + Table (PNG)",
+                data=buf,
+                file_name="status_summary.png",
+                mime="image/png"
+            )
 
             export_df = filtered[[
                 "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
                 "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
             ]].copy()
+
             export_df["Date of Inspection"] = export_df["Date of Inspection"].dt.strftime('%d-%m-%Y')
             towb = BytesIO()
             export_df.to_excel(towb, index=False)
             towb.seek(0)
 
-            st.download_button("📥 Export Filtered Records to Excel", towb,
-                               "filtered_records.xlsx",
-                               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            st.download_button(
+                "📥 Export Filtered Records to Excel",
+                data=towb,
+                file_name="filtered_records.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
             st.markdown("### 📄 Preview of Filtered Records")
             st.dataframe(export_df, use_container_width=True, hide_index=True)
