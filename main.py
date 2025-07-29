@@ -58,6 +58,10 @@ if not st.session_state.logged_in:
 import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
+pk = st.secrets["gcp_service_account"]["private_key"]
+st.text("DEBUG private_key length: " + str(len(pk)))
+st.text("DEBUG private_key first 80 chars:\n" + pk[:80].replace("\n", "\\n"))
+st.text("DEBUG private_key last 80 chars:\n" + pk[-80:].replace("\n", "\\n"))
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
