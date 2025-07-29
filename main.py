@@ -56,12 +56,8 @@ if not st.session_state.logged_in:
 
 # --- Google Sheets Setup ---
 import gspread
-import streamlit as st
 from google.oauth2.service_account import Credentials
-pk = st.secrets["gcp_service_account"]["private_key"]
-st.text("DEBUG private_key length: " + str(len(pk)))
-st.text("DEBUG private_key first 80 chars:\n" + pk[:80].replace("\n", "\\n"))
-st.text("DEBUG private_key last 80 chars:\n" + pk[-80:].replace("\n", "\\n"))
+import streamlit as st
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -69,11 +65,10 @@ SCOPES = [
 ]
 
 try:
-    # Convert secrets AttrDict to a plain dict
     service_account_info = st.secrets["gcp_service_account"].to_dict()
 
-    # Replace literal '\n' with real newlines
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n").strip()
+    # FIX: convert literal "\n" into actual newlines
+    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
@@ -87,6 +82,7 @@ try:
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
     st.stop()
+
 
 
 
