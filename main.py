@@ -55,8 +55,8 @@ if not st.session_state.logged_in:
     st.stop()
 
 # --- Google Sheets Setup ---
-import json, tempfile
 import gspread
+import json
 from google.oauth2.service_account import Credentials
 import streamlit as st
 
@@ -66,18 +66,17 @@ SCOPES = [
 ]
 
 try:
-    # Write the service account dict to a temp file
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
-        json.dump(st.secrets["gcp_service_account"].to_dict(), f)
-        f.flush()
-        creds = Credentials.from_service_account_file(f.name, scopes=SCOPES)
+    # Now we load the JSON string directly
+    service_account_info = json.loads(st.secrets["gcp_service_account"])
 
+    creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
+
     SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
     SHEET_NAME = "Sheet1"
     sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
-    st.success("✅ Connected via temp file!")
+    st.success("✅ Connected to Google Sheets!")
 
 except Exception as e:
     st.error(f"Error connecting to Google Sheets: {e}")
