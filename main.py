@@ -164,13 +164,39 @@ def classify_feedback(feedback):
         return "Pending"
     return "Resolved"
 
+# -------------------- HELPER FUNCTIONS --------------------
+# All functions are defined here before they are called in the UI logic.
+
 def load_data():
+    """Loads all records from the Google Sheet and returns a DataFrame."""
     try:
-        data = sheet.get_all_records()
-        return pd.DataFrame(data)
+        data = sheet.get_all_values()
+        if not data:
+            st.warning("Google Sheet is empty or unreadable.")
+            return pd.DataFrame(columns=columns)
+
+        # Check if the first row is actually headers
+        # If the sheet might sometimes be truly empty, handle that gracefully
+        if not data[0] or len(data) < 2:  # Check if header row is empty or only header exists
+            st.info("Google Sheet is empty or only contains headers.")
+            return pd.DataFrame(columns=columns)
+
+        df = pd.DataFrame(data[1:], columns=data[0])
+
+        # Ensure 'Date of Inspection' is in correct format for consistent processing
+        if 'Date of Inspection' in df.columns:
+            # Attempt to convert to datetime, then back to the desired string format
+            # This handles potential mixed formats better for consistency
+            df['Date of Inspection'] = pd.to_datetime(df['Date of Inspection'], errors='coerce').dt.strftime('%d.%m.%y')
+        return df
+    except gspread.exceptions.APIError as e:
+        st.error(f"Google Sheets API Error loading data: {e}")
+        st.info("Please check your sheet ID and service account permissions.")
+        return pd.DataFrame(columns=columns)
     except Exception as e:
-        st.error(f"❌ Could not load records: {e}")
-        return pd.DataFrame()
+        st.error(f"An unexpected error occurred while loading data: {e}")
+        return pd.DataFrame(columns=columns)
+
 
 def apply_common_filters(df, prefix=""):
     return df  # placeholder for now, extend if you have common filters
