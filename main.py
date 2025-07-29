@@ -1,24 +1,22 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
+import pandas as pd
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Inspection App", layout="wide")
 
-# ---------- USER AUTH ----------
-# Example users - ideally store in secrets.toml
-USERS = [
-    {"name": "Raj", "email": "admin@example.com", "password": "123"},
-    {"name": "User", "email": "a", "password": "123"},
-    {"name": "DRM/SUR", "email": "drm@sur.railnet.gov.in", "password": "123"},
-    {"name": "ADRM/SUR", "email": "adrm@sur.railnet.gov.in", "password": "123"},
-]
-
+# ---------- USER AUTH FROM SECRETS ----------
 def login(email, password):
-    for user in USERS:
-        if user["email"] == email and user["password"] == password:
-            return user
-    return None
+    try:
+        users = st.secrets["users"]
+        for user in users:
+            if user["email"] == email and user["password"] == password:
+                return user
+        return None
+    except KeyError:
+        st.error("⚠️ No users found in secrets.toml — please check your [[users]] block.")
+        st.stop()
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -38,7 +36,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.session_state.user = user
                 st.success(f"✅ Welcome, {user['name']}!")
-                st.rerun()
+                st.experimental_rerun()
             else:
                 st.error("❌ Invalid email or password.")
     st.stop()
@@ -90,7 +88,6 @@ try:
             AgGrid(df, gridOptions=grid_options, height=400, theme="balham")
         except Exception:
             st.warning("⚠️ 'streamlit-aggrid' not installed. Showing default table.")
-            import pandas as pd
             df = pd.DataFrame(data)
             st.dataframe(df)
 
