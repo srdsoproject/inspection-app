@@ -42,13 +42,13 @@ if "user" not in st.session_state:
 # --- Login UI ---
 if not st.session_state.logged_in:
    # Inside login block
-st.set_page_config(page_title="Login | Inspection App", layout="centered")
+    st.set_page_config(page_title="Login | Inspection App", layout="centered")
 
 # Later in app UI
-st.set_page_config(page_title="Safety Inspection App", layout="wide")
+    st.set_page_config(page_title="Safety Inspection App", layout="wide")
 
 # Again
-st.set_page_config(page_title="Inspection App", layout="wide")
+    st.set_page_config(page_title="Inspection App", layout="wide")
 
     st.title("🔐 Login to Safety Inspection App")
 
