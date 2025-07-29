@@ -55,18 +55,16 @@ if not st.session_state.logged_in:
     st.stop()
 
 # --- Google Sheets Setup ---
-import gspread
-from google.oauth2.service_account import Credentials
-import streamlit as st
-
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
 
 try:
-    service_account_info = st.secrets["gcp_service_account"].to_dict()
-    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+    service_account_info = dict(st.secrets["gcp_service_account"])  # convert AttrDict to dict
+
+    if "\\n" in service_account_info["private_key"]:
+        service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
