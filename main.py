@@ -175,25 +175,38 @@ def classify_feedback(feedback):
 
 
 def load_data():
+    """Loads all records from the Google Sheet and returns a DataFrame."""
     try:
         data = sheet.get_all_values()
-        if not data or not data[0] or len(data) < 2:
-            st.info("Google Sheet is empty or only contains headers.")
+
+        # Check for empty or incomplete data
+        if not data:
+            st.warning("⚠️ Google Sheet is empty or unreadable.")
+            return pd.DataFrame(columns=columns)
+        if not data[0] or len(data) < 2:
+            st.info("ℹ️ Google Sheet has only headers or no valid rows.")
             return pd.DataFrame(columns=columns)
 
+        # Create DataFrame from sheet data
         df = pd.DataFrame(data[1:], columns=data[0])
-        if 'Date of Inspection' in df.columns:
-            df['Date of Inspection'] = pd.to_datetime(
-                df['Date of Inspection'], errors='coerce'
-            ).dt.strftime('%d.%m.%y')
+
+        # Standardize 'Date of Inspection' if present
+        if "Date of Inspection" in df.columns:
+            df["Date of Inspection"] = pd.to_datetime(
+                df["Date of Inspection"], errors="coerce"
+            ).dt.strftime("%d.%m.%y")
+
         return df
+
     except gspread.exceptions.APIError as e:
-        st.error(f"Google Sheets API Error loading data: {e}")
-        st.info("Check your sheet ID and service account permissions.")
+        st.error(f"🚫 Google Sheets API Error: {e}")
+        st.info("Please check your Sheet ID and service account permissions.")
         return pd.DataFrame(columns=columns)
+
     except Exception as e:
-        st.error(f"Unexpected error loading data: {e}")
+        st.error(f"❌ Unexpected error while loading data: {e}")
         return pd.DataFrame(columns=columns)
+
 
 def match_exact(value_list, cell_value):
     """Checks if any value in value_list exactly matches a comma-separated item in cell_value."""
@@ -222,7 +235,7 @@ def apply_common_filters(df, prefix=""):
             key=prefix + "action"
         )
 
-        '''col6, col7 = st.columns(2)
+        col6, col7 = st.columns(2)
         col6.date_input(
             "From Date",
             value=st.session_state.get(prefix + "from", None),
@@ -232,7 +245,7 @@ def apply_common_filters(df, prefix=""):
             "To Date",
             value=st.session_state.get(prefix + "to", None),
             key=prefix + "to"
-        )'''
+        )
 
     df_filtered = df.copy()
 
@@ -260,35 +273,7 @@ def apply_common_filters(df, prefix=""):
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
 
-def load_data():
-    """Loads all records from the Google Sheet and returns a DataFrame."""
-    try:
-        data = sheet.get_all_values()
-        if not data:
-            st.warning("Google Sheet is empty or unreadable.")
-            return pd.DataFrame(columns=columns)
 
-        # Check if the first row is actually headers
-        # If the sheet might sometimes be truly empty, handle that gracefully
-        if not data[0] or len(data) < 2:  # Check if header row is empty or only header exists
-            st.info("Google Sheet is empty or only contains headers.")
-            return pd.DataFrame(columns=columns)
-
-        df = pd.DataFrame(data[1:], columns=data[0])
-
-        # Ensure 'Date of Inspection' is in correct format for consistent processing
-        if 'Date of Inspection' in df.columns:
-            # Attempt to convert to datetime, then back to the desired string format
-            # This handles potential mixed formats better for consistency
-            df['Date of Inspection'] = pd.to_datetime(df['Date of Inspection'], errors='coerce').dt.strftime('%d.%m.%y')
-        return df
-    except gspread.exceptions.APIError as e:
-        st.error(f"Google Sheets API Error loading data: {e}")
-        st.info("Please check your sheet ID and service account permissions.")
-        return pd.DataFrame(columns=columns)
-    except Exception as e:
-        st.error(f"An unexpected error occurred while loading data: {e}")
-        return pd.DataFrame(columns=columns)
 
 
 
