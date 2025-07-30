@@ -161,7 +161,7 @@ def classify_feedback(feedback):
         "provided at", "in working condition", "is working", "found working",
         "equipment is working", "item is working", "As per plan", "Advised to ETL/",
         "noted it will be attended during the next primary maintenance", "Putright", "putright", "put right", "Put right",
-        "operational feasibility", "will be provided", "will be supplied shortly"
+        "operational feasibility", "will be provided", "will be supplied shortly", "advised to ubl"
     ]
 
     found_resolved = any(kw in feedback_normalized for kw in resolved_keywords)
