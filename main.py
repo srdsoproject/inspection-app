@@ -408,12 +408,10 @@ with tabs[0]:
             plt.savefig(buf, format="png", dpi=200)
             buf.seek(0)
             plt.close()
-            try:
-                st.image(buf, caption=None, use_container_width=True)  # for newer versions (if supported)
-            except TypeError:
-                st.image(buf, caption=None, use_column_width=True)     # fallback for your version
+             # fallback for your version
 
 
+            st.image(buf, caption=None, use_column_width=True)
 
             # Download buttons
             st.download_button(
