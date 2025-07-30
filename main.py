@@ -272,15 +272,7 @@ def apply_common_filters(df, prefix=""):
     return df_filtered
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
-
-
-
-
-
 # ---------- MAIN APP ----------
-st.title("📋 Safety Inspection Entry & Viewer")
-tabs = st.tabs(["📊 View Records"])
-
 st.title("📋 Safety Inspection Entry & Viewer")
 tabs = st.tabs(["📊 View Records"])
 
@@ -417,7 +409,8 @@ with tabs[0]:
             buf.seek(0)
             plt.close()
 
-            st.image(buf, caption=None, use_container_width=True)
+           st.image(buf, caption=None, use_column_width=True)
+
 
             # Download buttons
             st.download_button(
