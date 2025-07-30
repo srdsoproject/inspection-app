@@ -145,7 +145,7 @@ def classify_feedback(feedback):
         "will attend", "will be attended", "scheduled", "reminder",
         "to inform", "to counsel", "to submit", "to do", "to replace",
         "remains", "still", "under process", "not yet", "to be done",
-        "will be ensure", "during next", "action will be taken"
+        "will be ensure", "during next", "action will be taken", "Will be supplied shortly."
     ]
 
     resolved_keywords = [
