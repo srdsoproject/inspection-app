@@ -160,7 +160,7 @@ def classify_feedback(feedback):
         "counselled the", "checked and found", "maintained", "for needful action",
         "provided at", "in working condition", "is working", "found working",
         "equipment is working", "item is working",
-        "noted it will be attended during the next primary maintenance",
+        "noted it will be attended during the next primary maintenance", "Putright",
         "operational feasibility", "will be provided", "will be supplied shortly"
     ]
 
