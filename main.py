@@ -159,7 +159,7 @@ def classify_feedback(feedback):
         "noted please", "noted", "updated by", "adv to", "counselled the staff",
         "counselled the", "checked and found", "maintained", "for needful action",
         "provided at", "in working condition", "is working", "found working",
-        "equipment is working", "item is working",
+        "equipment is working", "item is working", "As per plan", "Advised to ETL/",
         "noted it will be attended during the next primary maintenance", "Putright", "putright", "put right", "Put right",
         "operational feasibility", "will be provided", "will be supplied shortly"
     ]
