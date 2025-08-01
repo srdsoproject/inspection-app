@@ -151,7 +151,7 @@ def classify_feedback(feedback):
     resolved_keywords = [
         "attended", "solved", "submitted", "done", "completed", "informed",
         "tdc work completed", "replaced", "message given", "msg given", "msg sent",
-        "info shared", "informed to", "communicated", "counseled", "counselled",
+        "info shared", "informed to", "communicated", "counseled", "counselled", "Gate will be closed soon",
         "handled", "resolved", "action taken", "spoken to", "talked to", "warned",
         "met", "discussion held", "report sent", "notified", "explained",
         "work completed", "acknowledged", "visited", "briefed", "guided", "DG sets handover to KLBG", "handover",
