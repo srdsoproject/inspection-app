@@ -153,7 +153,7 @@ def classify_feedback(feedback):
         "tdc work completed", "replaced", "message given", "msg given", "msg sent",
         "info shared", "informed to", "communicated", "counseled", "counselled", "Gate will be closed soon",
         "handled", "resolved", "action taken", "spoken to", "talked to", "warned",
-        "met", "discussion held", "report sent", "notified", "explained",
+        "met", "discussion held", "report sent", "notified", "explained", "NIL","nil", "na","NA",
         "work completed", "acknowledged", "visited", "briefed", "guided", "DG sets handover to KLBG", "handover",
         "message", "msg", "on ", "working properly", "checked found working", "Supply restored", 
         "noted please", "noted", "updated by", "adv to", "counselled the staff",
@@ -440,3 +440,4 @@ with tabs[0]:
 
             st.markdown("### 📄 Preview of Filtered Records")
             st.dataframe(export_df, use_container_width=True, hide_index=True)
+
