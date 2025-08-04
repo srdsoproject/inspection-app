@@ -294,7 +294,7 @@ tabs = st.tabs(["📊 View Records"])
 with tabs[0]:
     st.subheader("📊 View & Filter Records")
     df = load_data()
-
+   
     if df.empty:
         st.warning("No records found")
     else:
@@ -454,33 +454,41 @@ with tabs[0]:
             )
 
             st.markdown("### 📄 Preview of Filtered Records")
-            st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
+           
 
 # Add hidden column with actual Google Sheet row numbers
 if "_sheet_row" not in filtered.columns:
     filtered["_sheet_row"] = filtered.index + 2  # +2 (1 for header, 1 for 0-index)
 
-# Make a copy only with columns you want to show
+st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
+
 display_cols = [
     "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-    "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
+    "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
+    "User Feedback/Remark", "_sheet_row"
 ]
+
 editable_df = filtered[display_cols].copy()
 
-# Editable grid (only User Feedback/Remark is editable)
 edited_df = st.data_editor(
     editable_df,
     use_container_width=True,
     hide_index=True,
     num_rows="fixed",
     column_config={
-        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark"),
+        "_sheet_row": st.column_config.TextColumn("_sheet_row", visible=False)
     },
     disabled=[
         "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
         "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
     ]
 )
+
+if st.button("✅ Submit Feedback"):
+    update_feedback_column(edited_df)
+    st.success("✅ All feedback updated in Google Sheet (batch update)")
+
 
 
 # Submit Button
@@ -489,6 +497,7 @@ if st.button("✅ Submit Feedback"):
     st.success("Feedback updated in Google Sheet ✅")
 
                
+
 
 
 
