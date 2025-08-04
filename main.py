@@ -223,9 +223,12 @@ def update_feedback_column(edited_df):
         st.error("⚠️ 'User Feedback/Remark' column not found in Google Sheet")
         return
 
-    # Update only the feedback column for filtered rows
-    for idx, remark in enumerate(edited_df["User Feedback/Remark"], start=2):  # start=2 → skip header
-        sheet.update_cell(idx, feedback_col, remark)
+    # Update feedback column only
+    for _, row in edited_df.iterrows():
+        row_number = int(row["_sheet_row"])  # actual row number in sheet
+        new_value = row["User Feedback/Remark"]
+        sheet.update_cell(row_number, feedback_col, new_value)
+
 
 
 def apply_common_filters(df, prefix=""):
@@ -482,10 +485,11 @@ edited_df = st.data_editor(
 
 # Submit Button
 if st.button("✅ Submit Feedback"):
-    update_feedback_column(edited_df, filtered)
+    update_feedback_column(edited_df)
     st.success("Feedback updated in Google Sheet ✅")
 
                
+
 
 
 
