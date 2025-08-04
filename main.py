@@ -214,6 +214,18 @@ def match_exact(value_list, cell_value):
         return False
     cell_items = [item.strip() for item in cell_value.split(',')]
     return any(val == item for val in value_list for item in cell_items)
+# ---------- Update Feedback Column Only ----------
+def update_feedback_column(edited_df):
+    header = sheet.row_values(1)
+    try:
+        feedback_col = header.index("User Feedback/Remark") + 1  # gspread is 1-based
+    except ValueError:
+        st.error("⚠️ 'User Feedback/Remark' column not found in Google Sheet")
+        return
+
+    # Update only the feedback column for filtered rows
+    for idx, remark in enumerate(edited_df["User Feedback/Remark"], start=2):  # start=2 → skip header
+        sheet.update_cell(idx, feedback_col, remark)
 
 
 def apply_common_filters(df, prefix=""):
@@ -439,6 +451,31 @@ with tabs[0]:
             )
 
             st.markdown("### 📄 Preview of Filtered Records")
-            st.dataframe(export_df, use_container_width=True, hide_index=True)
+            st.markdown("### ✍️ Enter User Feedback/Remarks")
+
+# Create editable inputs for the feedback column only
+feedback_inputs = []
+for i, row in filtered.iterrows():
+    st.write(
+        f"**Record {i+1} | {row['Date of Inspection'].strftime('%d-%m-%Y')} "
+        f"| {row['Type of Inspection']} | {row['Location']}**"
+    )
+    remark = st.text_input(
+        label="Feedback:",
+        value=row["User Feedback/Remark"],
+        key=f"feedback_{i}"
+    )
+    feedback_inputs.append(remark)
+
+# Replace feedback column with new values
+edited_df = filtered.copy()
+edited_df["User Feedback/Remark"] = feedback_inputs
+
+# Submit Button
+if st.button("✅ Submit Feedback"):
+    update_feedback_column(edited_df)
+    st.success("Feedback updated in Google Sheet ✅")
+
+
 
 
