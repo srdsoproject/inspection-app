@@ -451,31 +451,40 @@ with tabs[0]:
             )
 
             st.markdown("### 📄 Preview of Filtered Records")
-            st.markdown("### ✍️ Enter User Feedback/Remarks")
+            st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
-# Create editable inputs for the feedback column only
-feedback_inputs = []
-for i, row in filtered.iterrows():
-    st.write(
-        f"**Record {i+1} | {row['Date of Inspection'].strftime('%d-%m-%Y')} "
-        f"| {row['Type of Inspection']} | {row['Location']}**"
-    )
-    remark = st.text_input(
-        label="Feedback:",
-        value=row["User Feedback/Remark"],
-        key=f"feedback_{i}"
-    )
-    feedback_inputs.append(remark)
+# Add hidden column with actual Google Sheet row numbers
+if "_sheet_row" not in filtered.columns:
+    filtered["_sheet_row"] = filtered.index + 2  # +2 (1 for header, 1 for 0-index)
 
-# Replace feedback column with new values
-edited_df = filtered.copy()
-edited_df["User Feedback/Remark"] = feedback_inputs
+# Make a copy only with columns you want to show
+display_cols = [
+    "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+    "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
+]
+editable_df = filtered[display_cols].copy()
+
+# Editable grid (only User Feedback/Remark is editable)
+edited_df = st.experimental_data_editor(
+    editable_df,
+    use_container_width=True,
+    hide_index=True,
+    num_rows="fixed",
+    column_config={
+        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+    },
+    disabled=[
+        "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+        "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+    ]
+)
 
 # Submit Button
 if st.button("✅ Submit Feedback"):
-    update_feedback_column(edited_df)
+    update_feedback_column(edited_df, filtered)
     st.success("Feedback updated in Google Sheet ✅")
 
+               
 
 
 
