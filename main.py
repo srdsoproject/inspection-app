@@ -465,7 +465,7 @@ display_cols = [
 editable_df = filtered[display_cols].copy()
 
 # Editable grid (only User Feedback/Remark is editable)
-edited_df = st.experimental_data_editor(
+edited_df = st.data_editor(
     editable_df,
     use_container_width=True,
     hide_index=True,
@@ -479,12 +479,14 @@ edited_df = st.experimental_data_editor(
     ]
 )
 
+
 # Submit Button
 if st.button("✅ Submit Feedback"):
     update_feedback_column(edited_df, filtered)
     st.success("Feedback updated in Google Sheet ✅")
 
                
+
 
 
 
