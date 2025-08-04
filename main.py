@@ -457,27 +457,30 @@ with tabs[0]:
            
 
 # Add hidden column with actual Google Sheet row numbers
-if "_sheet_row" not in filtered.columns:
-    filtered["_sheet_row"] = filtered.index + 2  # +2 (1 for header, 1 for 0-index)
-
 st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
+# Make sure each row has a Google Sheet row number
+if "_sheet_row" not in filtered.columns:
+    filtered["_sheet_row"] = filtered.index + 2  # 2 = header + 1-based index
+
+# Columns shown to user (exclude _sheet_row)
 display_cols = [
     "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
     "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
-    "User Feedback/Remark", "_sheet_row"
+    "User Feedback/Remark"
 ]
 
+# Editable copy (user doesn't see _sheet_row)
 editable_df = filtered[display_cols].copy()
 
+# Editor for user
 edited_df = st.data_editor(
     editable_df,
     use_container_width=True,
     hide_index=True,
     num_rows="fixed",
     column_config={
-        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark"),
-        "_sheet_row": st.column_config.TextColumn("_sheet_row", visible=False)
+        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
     },
     disabled=[
         "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
@@ -485,18 +488,16 @@ edited_df = st.data_editor(
     ]
 )
 
+# Add back the hidden _sheet_row column
+edited_df["_sheet_row"] = filtered["_sheet_row"]
+
+# Submit button
 if st.button("✅ Submit Feedback"):
     update_feedback_column(edited_df)
-    st.success("✅ All feedback updated in Google Sheet (batch update)")
-
-
-
-# Submit Button
-if st.button("✅ Submit Feedback"):
-    update_feedback_column(edited_df)
-    st.success("Feedback updated in Google Sheet ✅")
+    st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
