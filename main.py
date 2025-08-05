@@ -338,7 +338,26 @@ with tabs[0]:
         "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION",
         # add more as needed
     ]
+    station_list = ['BRB', 'MLM', 'BGVN', 'JNTR', 'PRWD', 'WSB', 'PPJ', 'JEUR', 'KEM', 'BLNI', 'DHS', 'KWV', 'WDS',
+                'MA', 'AAG', 'MKPT', 'MO', 'MVE', 'PK', 'BALE', "SUR", 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'DUD',
+                'KUI', 'GDGN', 'GUR', 'HHD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'ARAG',
+                'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB', 'SEI', 'BTW',
+                'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR']
+
     footplate_list = ["SUR-DD", "SUR-WADI", "LUR-KWV", "KWV-MRJ", "DD-SUR", "WADI-SUR", "KWV-LUR", "MRJ-KWV"]
+
+    gate_list = ['LC-19', 'LC-22A', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37', 'LC-40',
+             'LC-41', 'LC-43', 'LC-44', 'LC-45', 'LC-46C', 'LC-54', 'LC-61', 'LC-66', 'LC-74', 'LC-76', 'LC-78',
+             'LC-82', 'LC-1', 'LC-60A', 'LC-1 TLT ZCL', 'LC-1 ACC', 'LC-2 ACC', 'LC-91', 'LC-22', 'LC-24', 'LC-31',
+             'LC-32', 'LC-49', 'LC-70', 'LC-10', 'LC-34', 'LC-36', 'LC-44', 'LC-47', 'LC-55', 'LC-59', 'LC-2',
+             'LC-4', 'LC-42', 'LC-02', 'LC-31', 'LC-5', 'LC-6', 'LC-57', 'LC-62', 'LC-66', 'LC-70', 'LC-39',
+             'LC-2/C', 'LC-6/C', 'LC-10', 'LC-11', 'LC-15/C', 'LC-21', 'LC-26-A', 'LC-34', 'LC-36', 'LC-44',
+             'LC-47', 'LC-55', 'LC-57', 'LC-59', 'LC-60', 'LC-61']
+    INSPECTION_LOCATIONS = {
+    "FOOTPLATE INSPECTION": footplate_list,
+    "STATION INSPECTION": station_list,
+    "LC GATE INSPECTION": gate_list,}
+
 
     df = load_data()
    
@@ -361,9 +380,29 @@ with tabs[0]:
             key="view_date_range"
         )
 
-        col1, col2 = st.columns(2)
-        col1.multiselect( "Type of Inspection",VALID_INSPECTIONS,  key="view_type_filter")
-        col2.selectbox("Location", [""]  + footplate_list,  key="view_location_filter")
+       col1, col2 = st.columns(2)
+
+# Type of Inspection filter
+       col1.multiselect(
+            "Type of Inspection",
+            VALID_INSPECTIONS,
+            key="view_type_filter"
+        )
+        
+        # Dynamically decide Location options
+        selected_type = st.session_state.view_type_filter
+        
+        if selected_type and len(selected_type) == 1:
+            # If exactly one inspection type selected, show its matching location list
+            location_options = INSPECTION_LOCATIONS.get(selected_type[0], [])
+        else:
+            # Otherwise (multiple types or none), show all unique cleaned locations
+            location_options = sorted(df["Location"].dropna().unique())
+        
+        col2.selectbox(
+            "Location",
+            [""] + location_options,
+            key="view_location_filter"    )
 
         col3, col4 = st.columns(2)
         col3.multiselect("Head", HEAD_LIST[1:], key="view_head_filter")
@@ -544,6 +583,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
