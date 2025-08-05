@@ -149,8 +149,8 @@ def classify_feedback(feedback):
     ]
 
     resolved_keywords = [
-        "attended", "solved", "submitted", "done", "completed", "informed", "Confirmed by","confirmed by",
-        "tdc work completed", "replaced", "message given", "msg given", "msg sent",
+        "attended", "solved", "submitted", "done", "completed", "informed", "Confirmed by","confirmed by", "message given",
+        "tdc work completed", "replaced", "message given", "msg given", "msg sent", "counseled", "informed to",
         "info shared", "informed to", "communicated", "counseled", "counselled", "Gate will be closed soon", "attending at the time", "Attending at time",
         "handled", "resolved", "action taken", "spoken to", "talked to", "warned", "counselling", "HUBLI", "working normal", "Working Normal",
         "met", "discussion held", "report sent", "notified", "explained", "NIL","nil", "na","NA",
@@ -573,6 +573,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
