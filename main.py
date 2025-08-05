@@ -487,10 +487,7 @@ with tabs[0]:
             buf.seek(0)
             plt.close()
              # fallback for your version
-
-
             st.image(buf, caption=None, use_column_width=True)
-
             # Download buttons
             st.download_button(
                 "📥 Download Graph + Table (PNG)",
@@ -506,7 +503,20 @@ with tabs[0]:
 
             export_df["Date of Inspection"] = export_df["Date of Inspection"].dt.strftime('%d-%m-%Y')
             towb = BytesIO()
-            export_df.to_excel(towb, index=False)
+            with pd.ExcelWriter(towb, engine="openpyxl") as writer:
+                export_df.to_excel(writer, index=False, sheet_name="Filtered Records")
+            
+                # Access workbook & worksheet
+                worksheet = writer.sheets["Filtered Records"]
+                
+                # Find "Deficiencies Noted" column index
+                col_idx = export_df.columns.get_loc("Deficiencies Noted") + 1  # +1 because Excel is 1-indexed
+            
+                # Apply text wrap to all cells in that column
+                for row in worksheet.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx, max_row=len(export_df)+1):
+                    for cell in row:
+                        cell.alignment = Alignment(wrap_text=True, vertical="top")
+            
             towb.seek(0)
 
             st.download_button(
@@ -515,7 +525,6 @@ with tabs[0]:
                 file_name="filtered_records.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
             st.markdown("### 📄 Preview of Filtered Records")
            
 
@@ -560,6 +569,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
