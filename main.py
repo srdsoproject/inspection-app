@@ -153,7 +153,7 @@ def classify_feedback(feedback):
         "tdc work completed", "replaced", "message given", "msg given", "msg sent", "counseled", "informed to", "Counseled ",
         "info shared", "informed to", "communicated", "counseled", "counselled", "Gate will be closed soon", "attending at the time", "Attending at time",
         "handled", "resolved", "action taken", "spoken to", "talked to", "warned", "counselling", "HUBLI", "working normal", "Working Normal",
-        "met", "discussion held", "report sent", "notified", "explained", "NIL","nil", "na","NA",
+        "met", "discussion held", "report sent", "notified", "explained", "NIL","nil", "na","NA", 'TLC', 'tlc',
         "work completed", "acknowledged", "visited", "briefed", "guided", "DG sets handover to KLBG", "handover",
         "message", "msg", "on ", "working properly", "checked found working", "Supply restored", 
         "noted please", "noted", "updated by", "adv to", "counselled the staff", "complied",
@@ -573,6 +573,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
