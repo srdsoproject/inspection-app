@@ -250,6 +250,21 @@ def update_feedback_column(edited_df):
         st.error("⚠️ 'User Feedback/Remark' column not found in Google Sheet")
         return
 
+    updates = 0
+    for _, row in edited_df.iterrows():
+        sheet_row = int(row["_sheet_row"])
+        new_value = row["User Feedback/Remark"]
+
+        # Get the current value from Google Sheet (optional optimization)
+        current_value = sheet.cell(sheet_row, feedback_col).value
+
+        # Only update if the value actually changed
+        if str(new_value).strip() != str(current_value).strip():
+            sheet.update_cell(sheet_row, feedback_col, new_value)
+            updates += 1
+
+    st.success(f"✅ Feedback updated for {updates} row(s) in Google Sheet")
+
     # Build a list of ranges and values for batch update
     updates = []
     for _, row in edited_df.iterrows():
@@ -574,6 +589,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
