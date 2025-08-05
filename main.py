@@ -97,7 +97,7 @@ SUBHEAD_LIST = {
     "ELECT/G": ["TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC"],
     "ELECT/TRO": ["LOCO DEFECTS", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE", "PR RELATED",
                   "CMS", "MISC"],
-    "WORKSITE INSPECTION": [ "PWAY WORKS", "CIVIL WORKS", "MISC"],
+    
     "SIGNAL & TELECOM": [ "SIGNAL PUTBACK/BLANK", "OTHER SIGNAL FAILURE", "BPAC", "GATE", "RELAY ROOM",
                          "STATION(VDU/BLOCK INSTRUMENT)", "MISC", "CCTV", "DISPLAY BOARDS"],
     "OPTG": [ "SWR/CSR/CSL/TWRD", "COMPETENCY RELATED", "STATION RECORDS", "STATION DEFICIENCIES",
@@ -175,17 +175,31 @@ def classify_feedback(feedback):
 
 
 def load_data():
-    """Loads all records from the Google Sheet and returns a DataFrame."""
+    """Loads all records from the Google Sheet and returns a cleaned DataFrame."""
+
+    # --- Define the valid inspection types ---
+    VALID_INSPECTIONS = [
+        "FOOTPLATE INSPECTION",
+        "STATION INSPECTION",
+        "LC GATE INSPECTION",
+        "MISC",
+        "COACHING DEPOT",
+        "ON TRAIN",
+        "SURPRISE/AMBUSH INSPECTION",
+        # add more as needed
+    ]
+
     try:
+        # Fetch the raw sheet data
         data = sheet.get_all_values()
 
         # Check for empty or incomplete data
         if not data:
             st.warning("⚠️ Google Sheet is empty or unreadable.")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=["Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head", "Feedback"])
         if not data[0] or len(data) < 2:
             st.info("ℹ️ Google Sheet has only headers or no valid rows.")
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=["Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head", "Feedback"])
 
         # Create DataFrame from sheet data
         df = pd.DataFrame(data[1:], columns=data[0])
@@ -194,18 +208,27 @@ def load_data():
         if "Date of Inspection" in df.columns:
             df["Date of Inspection"] = pd.to_datetime(
                 df["Date of Inspection"], errors="coerce"
-            ).dt.strftime("%d.%m.%y")
+            )
+
+        # Ensure the 'Type of Inspection' column exists
+        if "Type of Inspection" not in df.columns:
+            df["Type of Inspection"] = ""
+
+        # Clean up invalid values: keep only known types
+        df["Type of Inspection"] = df["Type of Inspection"].apply(
+            lambda x: x if x in VALID_INSPECTIONS else ""
+        )
 
         return df
 
     except gspread.exceptions.APIError as e:
         st.error(f"🚫 Google Sheets API Error: {e}")
         st.info("Please check your Sheet ID and service account permissions.")
-        return pd.DataFrame(columns=columns)
+        return pd.DataFrame(columns=["Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head", "Feedback"])
 
     except Exception as e:
         st.error(f"❌ Unexpected error while loading data: {e}")
-        return pd.DataFrame(columns=columns)
+        return pd.DataFrame(columns=["Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head", "Feedback"])
 
 
 def match_exact(value_list, cell_value):
@@ -323,7 +346,14 @@ with tabs[0]:
         )
 
         col1, col2 = st.columns(2)
-        col1.multiselect("Type of Inspection", sorted(df["Type of Inspection"].dropna().unique()), key="view_type_filter")
+       sheet_inspections = sorted(df["Type of Inspection"].dropna().unique())
+all_options = sorted(set(VALID_INSPECTIONS) | set(sheet_inspections))
+
+col1.multiselect(
+    "Type of Inspection",
+    all_options, 
+    key="view_type_filter"
+)
         col2.selectbox("Location", [""] + sorted(df["Location"].dropna().unique()), key="view_location_filter")
 
         col3, col4 = st.columns(2)
@@ -505,6 +535,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
