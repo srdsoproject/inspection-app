@@ -386,8 +386,8 @@ with tabs[0]:
     if df.empty:
         st.warning("No records found")
     else:
-    df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], format="%d.%m.%y", errors="coerce")
-    df["_original_sheet_index"] = df.index
+        df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], format="%d.%m.%y", errors="coerce")
+        df["_original_sheet_index"] = df.index
 
     for col in ["Type of Inspection", "Location", "Head", "Sub Head", "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"]:
         if col not in df.columns:
@@ -598,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
