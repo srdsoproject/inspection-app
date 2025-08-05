@@ -359,7 +359,7 @@ with tabs[0]:
     "LC GATE INSPECTION": gate_list,}
 
 
-    df = load_data()
+      df = load_data()
    
     if df.empty:
         st.warning("No records found")
@@ -380,29 +380,9 @@ with tabs[0]:
             key="view_date_range"
         )
 
-    col1, col2 = st.columns(2)
-
-# Type of Inspection filter
-    col1.multiselect(
-        "Type of Inspection",
-        VALID_INSPECTIONS,
-        key="view_type_filter"
-    )
-        
-        # Dynamically decide Location options
-    selected_type = st.session_state.view_type_filter
-    
-    if selected_type and len(selected_type) == 1:
-        # If exactly one inspection type selected, show its matching location list
-        location_options = INSPECTION_LOCATIONS.get(selected_type[0], [])
-    else:
-        # Otherwise (multiple types or none), show all unique cleaned locations
-        location_options = sorted(df["Location"].dropna().unique())
-    
-    col2.selectbox(
-        "Location",
-        [""] + location_options,
-        key="view_location_filter"    )
+        col1, col2 = st.columns(2)
+        col1.multiselect( "Type of Inspection",VALID_INSPECTIONS,  key="view_type_filter")
+        col2.selectbox("Location", [""]  + footplate_list,  key="view_location_filter")
 
         col3, col4 = st.columns(2)
         col3.multiselect("Head", HEAD_LIST[1:], key="view_head_filter")
@@ -583,6 +563,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
