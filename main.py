@@ -346,14 +346,7 @@ with tabs[0]:
         )
 
         col1, col2 = st.columns(2)
-       sheet_inspections = sorted(df["Type of Inspection"].dropna().unique())
-all_options = sorted(set(VALID_INSPECTIONS) | set(sheet_inspections))
-
-col1.multiselect(
-    "Type of Inspection",
-    all_options, 
-    key="view_type_filter"
-)
+        col1.multiselect( "Type of Inspection",VALID_INSPECTIONS,  key="view_type_filter")
         col2.selectbox("Location", [""] + sorted(df["Location"].dropna().unique()), key="view_location_filter")
 
         col3, col4 = st.columns(2)
@@ -535,6 +528,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
