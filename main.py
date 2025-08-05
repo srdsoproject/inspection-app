@@ -384,8 +384,8 @@ with tabs[0]:
     df = load_data()
    
     if df.empty:
-    st.warning("No records found")
-else:
+        st.warning("No records found")
+    else:
     df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], format="%d.%m.%y", errors="coerce")
     df["_original_sheet_index"] = df.index
 
@@ -598,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
