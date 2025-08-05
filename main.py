@@ -221,7 +221,8 @@ def load_data():
         if "Location" not in df.columns:
             df["Location"] = ""
             df["Location"] = df["Location"].astype(str).str.strip().str.title()
-
+        df["Location"] = df["Location"].astype(str).str.strip().str.upper()
+        df["Location"] = df["Location"].apply(lambda x: x if x in [loc.upper() for loc in footplate_list] else "")
         return df
 
     except gspread.exceptions.APIError as e:
@@ -337,6 +338,8 @@ with tabs[0]:
         "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION",
         # add more as needed
     ]
+    footplate_list = ["SUR-DD", "SUR-WADI", "LUR-KWV", "KWV-MRJ", "DD-SUR", "WADI-SUR", "KWV-LUR", "MRJ-KWV"]
+
     df = load_data()
    
     if df.empty:
@@ -360,7 +363,7 @@ with tabs[0]:
 
         col1, col2 = st.columns(2)
         col1.multiselect( "Type of Inspection",VALID_INSPECTIONS,  key="view_type_filter")
-        col2.selectbox("Location", [""] + sorted(df["Location"].dropna().unique()), key="view_location_filter")
+        col2.selectbox("Location", [""] + + footplate_list,  key="view_location_filter")
 
         col3, col4 = st.columns(2)
         col3.multiselect("Head", HEAD_LIST[1:], key="view_head_filter")
@@ -541,6 +544,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
