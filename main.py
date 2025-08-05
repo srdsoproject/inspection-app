@@ -331,7 +331,7 @@ with tabs[0]:
         "MISC",
         "COACHING DEPOT",
         "ON TRAIN",
-        "SURPRISE/AMBUSH INSPECTION",
+        "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION",
         # add more as needed
     ]
     df = load_data()
@@ -538,6 +538,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
