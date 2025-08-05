@@ -530,22 +530,22 @@ with tabs[0]:
         from io import BytesIO
         from openpyxl.styles import Alignment
             
-            towb = BytesIO()
-            with pd.ExcelWriter(towb, engine="openpyxl") as writer:
-                export_df.to_excel(writer, index=False, sheet_name="Filtered Records")
+        towb = BytesIO()
+        with pd.ExcelWriter(towb, engine="openpyxl") as writer:
+            export_df.to_excel(writer, index=False, sheet_name="Filtered Records")
+        
+            # Access workbook & worksheet
+            worksheet = writer.sheets["Filtered Records"]
             
-                # Access workbook & worksheet
-                worksheet = writer.sheets["Filtered Records"]
-                
-                # Find "Deficiencies Noted" column index
-                col_idx = export_df.columns.get_loc("Deficiencies Noted") + 1  # +1 because Excel is 1-indexed
-            
-                # Apply text wrap to all cells in that column
-                for row in worksheet.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx, max_row=len(export_df)+1):
-                    for cell in row:
-                        cell.alignment = Alignment(wrap_text=True, vertical="top")
-            
-            towb.seek(0)
+            # Find "Deficiencies Noted" column index
+            col_idx = export_df.columns.get_loc("Deficiencies Noted") + 1  # +1 because Excel is 1-indexed
+        
+            # Apply text wrap to all cells in that column
+            for row in worksheet.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx, max_row=len(export_df)+1):
+                for cell in row:
+                    cell.alignment = Alignment(wrap_text=True, vertical="top")
+        
+        towb.seek(0)
 
 
             st.download_button(
@@ -598,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
