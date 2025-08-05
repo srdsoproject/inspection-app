@@ -548,13 +548,13 @@ with tabs[0]:
         towb.seek(0)
 
 
-            st.download_button(
-                "📥 Export Filtered Records to Excel",
-                data=towb,
-                file_name="filtered_records.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            st.markdown("### 📄 Preview of Filtered Records")
+        st.download_button(
+            "📥 Export Filtered Records to Excel",
+            data=towb,
+            file_name="filtered_records.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        st.markdown("### 📄 Preview of Filtered Records")
            
 
 # Add hidden column with actual Google Sheet row numbers
@@ -598,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
