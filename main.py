@@ -359,7 +359,7 @@ with tabs[0]:
     "LC GATE INSPECTION": gate_list,}
 
 
-      df = load_data()
+    df = load_data()
    
     if df.empty:
         st.warning("No records found")
@@ -563,6 +563,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
