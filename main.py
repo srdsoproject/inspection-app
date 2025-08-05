@@ -202,23 +202,27 @@ def load_data():
 
     try:
         data = sheet.get_all_values()
-
-        if not data:
-            st.warning("⚠️ Google Sheet is empty or unreadable.")
+        if not data or not data[0] or len(data) < 2:
             return pd.DataFrame(columns=REQUIRED_COLS)
 
-        if not data[0] or len(data) < 2:
-            st.info("ℹ️ Google Sheet has only headers or no valid rows.")
-            return pd.DataFrame(columns=REQUIRED_COLS)
+        # Normalize headers to avoid space/case issues
+        headers = [c.strip() for c in data[0]]
+        df = pd.DataFrame(data[1:], columns=headers)
 
-        df = pd.DataFrame(data[1:], columns=[c.strip() for c in data[0]])
+        # Force "User Feedback/Remark" column to exist
+        if "User Feedback/Remark" not in df.columns:
+            # Try fuzzy matches in case of hidden space or typo
+            for col in df.columns:
+                if col.replace(" ", "").lower() == "userfeedback/remark":
+                    df.rename(columns={col: "User Feedback/Remark"}, inplace=True)
+                    break
 
-        # Ensure all required columns exist
+        # Ensure all required columns are present
         for col in REQUIRED_COLS:
             if col not in df.columns:
                 df[col] = ""
 
-        # Clean Date column
+        # Clean date
         df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], errors="coerce")
 
         # Validate inspection type
@@ -226,7 +230,7 @@ def load_data():
             lambda x: x if x in VALID_INSPECTIONS else ""
         )
 
-        # Clean up Location
+        # Clean location
         df["Location"] = df["Location"].astype(str).str.strip().str.upper()
         df["Location"] = df["Location"].apply(
             lambda x: x if x in [loc.upper() for loc in footplate_list] else ""
@@ -234,13 +238,10 @@ def load_data():
 
         return df
 
-    except gspread.exceptions.APIError as e:
-        st.error(f"🚫 Google Sheets API Error: {e}")
+    except Exception as e:
+        st.error(f"❌ Error loading Google Sheet: {e}")
         return pd.DataFrame(columns=REQUIRED_COLS)
 
-    except Exception as e:
-        st.error(f"❌ Unexpected error while loading data: {e}")
-        return pd.DataFrame(columns=REQUIRED_COLS)
 
 
 def match_exact(value_list, cell_value):
@@ -597,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
