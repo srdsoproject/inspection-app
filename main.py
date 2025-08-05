@@ -158,7 +158,7 @@ def classify_feedback(feedback):
         "message", "msg", "on ", "working properly", "checked found working", "Supply restored", 
         "noted please", "noted", "updated by", "adv to", "counselled the staff", "complied",
         "counselled the", "checked and found", "maintained", "for needful action", "Advised to ETL/CTO/UBL",
-        "provided at", "in working condition", "is working", "found working",
+        "provided at", "in working condition", "is working", "found working", "INFORMED ",
         "equipment is working", "item is working", "As per plan", "Advised to ETL/",
         "noted it will be attended during the next primary maintenance", "Putright", "putright", "put right", "Put right",
         "operational feasibility", "will be provided", "will be supplied shortly", "advised to ubl"
@@ -573,6 +573,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
