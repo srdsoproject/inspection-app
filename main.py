@@ -324,7 +324,7 @@ tabs = st.tabs(["📊 View Records"])
 
 with tabs[0]:
     st.subheader("📊 View & Filter Records")
-     VALID_INSPECTIONS = [
+    VALID_INSPECTIONS = [
         "FOOTPLATE INSPECTION",
         "STATION INSPECTION",
         "LC GATE INSPECTION",
@@ -538,6 +538,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
