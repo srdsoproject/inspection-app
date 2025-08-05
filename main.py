@@ -223,7 +223,7 @@ def load_data():
                 df[col] = ""
 
         # Clean date
-    df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], errors="coerce")
+        df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], errors="coerce")
 
         # Validate inspection type
         df["Type of Inspection"] = df["Type of Inspection"].apply(
@@ -598,6 +598,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
