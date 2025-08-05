@@ -218,6 +218,9 @@ def load_data():
         df["Type of Inspection"] = df["Type of Inspection"].apply(
             lambda x: x if x in VALID_INSPECTIONS else ""
         )
+        if "Location" not in df.columns:
+            df["Location"] = ""
+            df["Location"] = df["Location"].astype(str).str.strip().str.title()
 
         return df
 
@@ -538,6 +541,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
