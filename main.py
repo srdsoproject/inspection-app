@@ -502,6 +502,9 @@ with tabs[0]:
             ]].copy()
 
             export_df["Date of Inspection"] = export_df["Date of Inspection"].dt.strftime('%d-%m-%Y')
+            from io import BytesIO
+            from openpyxl.styles import Alignment
+            
             towb = BytesIO()
             with pd.ExcelWriter(towb, engine="openpyxl") as writer:
                 export_df.to_excel(writer, index=False, sheet_name="Filtered Records")
@@ -518,6 +521,7 @@ with tabs[0]:
                         cell.alignment = Alignment(wrap_text=True, vertical="top")
             
             towb.seek(0)
+
 
             st.download_button(
                 "📥 Export Filtered Records to Excel",
@@ -569,6 +573,7 @@ if st.button("✅ Submit Feedback"):
     st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
 
                
+
 
 
 
