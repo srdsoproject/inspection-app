@@ -441,11 +441,16 @@ with tabs[0]:
         import numpy as np
         
         # Filter and sort data
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import numpy as np
+        
+        # Data preparation
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
         
-        # Group small slices into "Others"
-        threshold = 0.02  # 2%
+        # Grouping small segments as 'Others'
+        threshold = 0.02
         total = pie_data["Count"].sum()
         pie_data["Percent"] = pie_data["Count"] / total
         
@@ -457,8 +462,8 @@ with tabs[0]:
             others_row = pd.DataFrame([{"Sub Head": "Others", "Count": others_sum}])
             major = pd.concat([major, others_row], ignore_index=True)
         
-        # Plot pie chart (not donut)
-        fig, ax = plt.subplots(figsize=(10, 6))
+        # Pie chart plotting
+        fig, ax = plt.subplots(figsize=(12, 7))
         
         wedges, texts, autotexts = ax.pie(
             major["Count"],
@@ -468,29 +473,36 @@ with tabs[0]:
             textprops=dict(color='black', fontsize=8)
         )
         
-        # External labels with connecting lines
+        # Smart external labels
         for wedge, (_, row) in zip(wedges, major.iterrows()):
             ang = (wedge.theta2 + wedge.theta1) / 2.0
             x = np.cos(np.deg2rad(ang))
             y = np.sin(np.deg2rad(ang))
-            label_x = 1.3 * x
-            label_y = 1.1 * y
+        
+            # Curved label positioning
+            label_x = 1.5 * np.sign(x)
+            label_y = y * 1.2
+        
+            alignment = "left" if x > 0 else "right"
             label = f"{row['Sub Head']} ({row['Count']})"
+        
             ax.text(
                 label_x, label_y, label,
-                ha="left" if x > 0 else "right",
+                ha=alignment,
                 va="center",
                 fontsize=8,
                 bbox=dict(facecolor="white", edgecolor="gray", alpha=0.7, pad=1)
             )
+        
             ax.annotate(
-                "", xy=(x, y), xytext=(label_x, label_y),
+                "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
                 arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
             )
         
-        # Title and layout
+        # Formatting
         ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
         plt.tight_layout()
+
 
        
     
@@ -671,6 +683,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
