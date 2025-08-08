@@ -290,9 +290,9 @@ def apply_common_filters(df, prefix=""):
 
     
     if st.session_state.get(prefix + "action"):
-        df_filtered = df_filtered[
-            df_filtered["Action By"].apply(lambda x: match_exact(st.session_state[prefix + "action"], x))
-        ]
+        selected = st.session_state[prefix + "action"]
+        df_filtered = df_filtered[df_filtered["Action By"].isin(selected if isinstance(selected, list) else [selected])]
+
 
 
     # Convert 'Date of Inspection' to datetime for comparison if it exists
@@ -706,6 +706,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
