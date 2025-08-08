@@ -434,59 +434,63 @@ with tabs[0]:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
         # --- Pie chart ---
+            
+        # Filter data
+        import pandas as pd
+        import matplotlib.pyplot as plt
         import numpy as np
         
-        # Data filtering
-        import matplotlib.pyplot as plt
-
-# Filter data
-        import pandas as pd
-
-             
-        # Filter data
+        # Filter and sort data
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
         
-        # Optional: Group very small values into "Others"
+        # Group small slices into "Others"
         threshold = 0.02  # 2%
         total = pie_data["Count"].sum()
         pie_data["Percent"] = pie_data["Count"] / total
         
-        # Group values below threshold
         major = pie_data[pie_data["Percent"] >= threshold]
         minor = pie_data[pie_data["Percent"] < threshold]
+        
         if not minor.empty:
             others_sum = minor["Count"].sum()
             others_row = pd.DataFrame([{"Sub Head": "Others", "Count": others_sum}])
             major = pd.concat([major, others_row], ignore_index=True)
         
-        # Pie chart setup
+        # Plot pie chart (not donut)
         fig, ax = plt.subplots(figsize=(10, 6))
         
-        # Create pie
         wedges, texts, autotexts = ax.pie(
             major["Count"],
             startangle=90,
             autopct='%1.1f%%',
-            pctdistance=0.8,
-            textprops=dict(color='black', fontsize=8),
-            wedgeprops=dict(width=0.5)
+            colors=plt.cm.Paired.colors,
+            textprops=dict(color='black', fontsize=8)
         )
         
-        # External labels
-        ax.legend(
-            wedges,
-            [f"{label} ({count})" for label, count in zip(major["Sub Head"], major["Count"])],
-            title="Sub Head",
-            loc="center left",
-            bbox_to_anchor=(1, 0.5),
-            fontsize=8
-        )
+        # External labels with connecting lines
+        for wedge, (_, row) in zip(wedges, major.iterrows()):
+            ang = (wedge.theta2 + wedge.theta1) / 2.0
+            x = np.cos(np.deg2rad(ang))
+            y = np.sin(np.deg2rad(ang))
+            label_x = 1.3 * x
+            label_y = 1.1 * y
+            label = f"{row['Sub Head']} ({row['Count']})"
+            ax.text(
+                label_x, label_y, label,
+                ha="left" if x > 0 else "right",
+                va="center",
+                fontsize=8,
+                bbox=dict(facecolor="white", edgecolor="gray", alpha=0.7, pad=1)
+            )
+            ax.annotate(
+                "", xy=(x, y), xytext=(label_x, label_y),
+                arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
+            )
         
         # Title and layout
         ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
         plt.tight_layout()
-
 
        
     
@@ -667,6 +671,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
