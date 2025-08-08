@@ -506,7 +506,8 @@ with tabs[0]:
                 y = np.sin(np.deg2rad(ang))
                 label_x = 1.3 * np.sign(x)
                 label_y = 1.1 * y
-                label = f"{row.Sub_Head} ({row.Count})"
+                label = f"{row._1} ({row._2})"
+
                 axes[0].text(
                     label_x, label_y, label,
                     ha="left" if x > 0 else "right",
@@ -687,6 +688,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
