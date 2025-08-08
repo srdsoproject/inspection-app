@@ -519,18 +519,10 @@ with tabs[0]:
         
         table_row_count = len(table_data)
         row_scale = 1 + (table_row_count * 0.05)
-        
-        '''tbl = axes[1].table(cellText=table_data, loc='center')
-        tbl.auto_set_font_size(False)
-        tbl.set_fontsize(10)
-        tbl.scale(1.2, row_scale)'''
-        
+               
         # --- Final layout adjustments ---
         plt.tight_layout(rect=[0, 0.06, 1, 0.94])
-        plt.show()
-
-
-       
+        plt.show()       
     
         # --- Table ---
         table_data = [["Sub Head", "Count"]] + subhead_summary.values.tolist()
@@ -709,6 +701,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
