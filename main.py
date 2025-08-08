@@ -440,6 +440,10 @@ with tabs[0]:
         import matplotlib.pyplot as plt
 
 # Filter data
+        import pandas as pd
+
+             
+        # Filter data
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
         
@@ -453,7 +457,8 @@ with tabs[0]:
         minor = pie_data[pie_data["Percent"] < threshold]
         if not minor.empty:
             others_sum = minor["Count"].sum()
-            major = major.append({"Sub Head": "Others", "Count": others_sum}, ignore_index=True)
+            others_row = pd.DataFrame([{"Sub Head": "Others", "Count": others_sum}])
+            major = pd.concat([major, others_row], ignore_index=True)
         
         # Pie chart setup
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -481,6 +486,7 @@ with tabs[0]:
         # Title and layout
         ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
         plt.tight_layout()
+
 
        
     
@@ -661,6 +667,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
