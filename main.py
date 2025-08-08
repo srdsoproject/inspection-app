@@ -474,21 +474,23 @@ with tabs[0]:
         )
         
         # Smart external labels
-        for wedge, (_, row) in zip(wedges, major.iterrows()):
+        # Smart external labels with alternating L/R layout
+        for i, (wedge, (_, row)) in enumerate(zip(wedges, major.iterrows())):
             ang = (wedge.theta2 + wedge.theta1) / 2.0
             x = np.cos(np.deg2rad(ang))
             y = np.sin(np.deg2rad(ang))
+            
+            # Alternate label sides
+            place_on_right = (i % 2 == 0)
+            label_x = 1.5 if place_on_right else -1.5
+            label_y = 1.2 * y
+            align = "left" if place_on_right else "right"
         
-            # Curved label positioning
-            label_x = 1.5 * np.sign(x)
-            label_y = y * 1.2
-        
-            alignment = "left" if x > 0 else "right"
             label = f"{row['Sub Head']} ({row['Count']})"
         
             ax.text(
                 label_x, label_y, label,
-                ha=alignment,
+                ha=align,
                 va="center",
                 fontsize=8,
                 bbox=dict(facecolor="white", edgecolor="gray", alpha=0.7, pad=1)
@@ -498,6 +500,7 @@ with tabs[0]:
                 "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
                 arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
             )
+
         
         # Formatting
         ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
@@ -683,6 +686,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
