@@ -605,7 +605,19 @@ if not editable_filtered.empty:
             use_container_width=True,
             hide_index=True,
             num_rows="fixed",
-            column_config={"User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")},
+            column_config={"User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+                          "Deficiencies Noted": st.column_config.TextColumn(
+                    "Deficiencies Noted", multiline=True
+                ),
+                "Inspection By": st.column_config.TextColumn(
+                    "Inspection By", multiline=True
+                ),
+                "Action By": st.column_config.TextColumn(
+                    "Action By", multiline=True
+                ),
+                "Feedback": st.column_config.TextColumn(
+                    "Feedback", multiline=True
+                ),},
           
             disabled=[
                 "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
@@ -666,6 +678,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
