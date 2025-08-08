@@ -150,14 +150,14 @@ def classify_feedback(feedback, user_remark=""):
             "updated by", "adv to", "counselled the staff", "complied", "checked and found", "maintained",
             "for needful action", "provided at", "in working condition", "is working", "found working", "informed",
             "equipment is working", "item is working", "as per plan", "putright", "put right", "operational feasibility",
-            "will be provided", "will be supplied shortly", "advised to ubl"
+            "will be provided", "will be supplied shortly", "advised to ubl", 'Updated', 'updated'
         ]
 
         pending_keywords = [
             "will be", "needful", "to be", "pending", "not done", "awaiting", "waiting", "yet to", "next time",
             "follow up", "tdc", "t d c", "will attend", "will be attended", "scheduled", "reminder", "to inform",
             "to counsel", "to submit", "to do", "to replace", "prior", "remains", "still", "under process", "not yet",
-            "to be done", "will be ensure", "during next", "action will be taken", "will be supplied shortly"
+            "to be done", "will be ensure", "during next", "action will be taken", "will be supplied shortly", 'not available','not updated'
         ]
 
         if any(kw in text_normalized for kw in resolved_keywords) or date_found:
@@ -666,6 +666,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
