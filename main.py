@@ -615,6 +615,9 @@ with tabs[0]:
         st.markdown("### 📄 Preview of Filtered Records")
 
 # Load once and keep in session
+import pandas as pd
+import streamlit as st
+
 st.markdown("### ✍️ User Feedback/Remarks (Pending Highlighted in Red)")
 
 editable_filtered = filtered.copy()
@@ -630,18 +633,28 @@ if not editable_filtered.empty:
     ]
     editable_df = editable_filtered[display_cols].copy()
 
-    # Define row-wise styling: red background for pending remarks
-    def highlight_pending(row):
-        return ['background-color: #FFCCCC' if str(row['User Feedback/Remark']).strip() else '' for _ in row]
+    # Generate HTML table with red-highlighted rows
+    def generate_html_table(df):
+        html = '<style>table {border-collapse: collapse;} td, th {padding: 8px; border: 1px solid #ccc;} .highlight {background-color: #ffcccc;}</style>'
+        html += "<table>"
+        # Header
+        html += "<thead><tr>" + "".join(f"<th>{col}</th>" for col in df.columns) + "</tr></thead>"
+        html += "<tbody>"
+        for _, row in df.iterrows():
+            is_pending = str(row["User Feedback/Remark"]).strip() != ""
+            row_class = "highlight" if is_pending else ""
+            html += f'<tr class="{row_class}">' + "".join(f"<td>{row[col]}</td>" for col in df.columns) + "</tr>"
+        html += "</tbody></table>"
+        return html
 
-    # Apply styling
-    styled_df = editable_df.style.apply(highlight_pending, axis=1)
-
-    # Display styled (non-editable) table
-    st.dataframe(styled_df, use_container_width=True)
+    # Render in Streamlit
+    html_table = generate_html_table(editable_df)
+    st.markdown(html_table, unsafe_allow_html=True)
 
 else:
     st.info("No records found.")
+
+
 
 
 
