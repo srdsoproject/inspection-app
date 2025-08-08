@@ -434,55 +434,44 @@ with tabs[0]:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
         # --- Pie chart ---
-        import numpy as np  # make sure this is imported at the top if not already
-        # Filter out very small slices into 'Others'
+        import matplotlib.pyplot as plt
+        import numpy as np
+        
+        # Data filtering
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
-        small_threshold = 5
-        small_data = pie_data[pie_data["Count"] < small_threshold]
-        main_data = pie_data[pie_data["Count"] >= small_threshold]
+        pie_data = pie_data.sort_values("Count", ascending=False)
         
-        # Add 'Others' if needed
-        if not small_data.empty:
-            others_total = small_data["Count"].sum()
-            others_row = pd.DataFrame([{"Sub Head": "Others", "Count": others_total}])
-            pie_data = pd.concat([main_data, others_row], ignore_index=True)
-        else:
-            pie_data = main_data
+        # Create figure
+        fig, ax = plt.subplots(figsize=(8, 6))
         
-        # Sort for consistency
-        pie_data = pie_data.sort_values("Count", ascending=False).reset_index(drop=True)
-        
-        # Pie chart
-        wedges, texts, autotexts = axes[0].pie(
+        # Donut chart
+        wedges, texts, autotexts = ax.pie(
             pie_data["Count"],
-            startangle=90,
+            labels=None,  # remove inline labels
             colors=plt.cm.Paired.colors,
-            radius=0.8,
-            autopct=lambda pct: f"{pct:.1f}%",
-            pctdistance=0.7
+            startangle=90,
+            radius=1.0,
+            autopct='%1.1f%%',
+            pctdistance=0.75,
+            wedgeprops=dict(width=0.4)  # donut hole
         )
         
-        # Label positioning
-        for i, (wedge, (_, row)) in enumerate(zip(wedges, pie_data.iterrows())):
-            ang = (wedge.theta2 + wedge.theta1) / 2.0
-            x = np.cos(np.deg2rad(ang))
-            y = np.sin(np.deg2rad(ang))
+        # Add legend on the side
+        ax.legend(
+            wedges,
+            [f"{label} ({count})" for label, count in zip(pie_data["Sub Head"], pie_data["Count"])],
+            title="Sub Head",
+            loc="center left",
+            bbox_to_anchor=(1, 0.5),
+            fontsize=8
+        )
         
-            label_x = 1.5 * x
-            label_y = 1.3 * y
+        # Center title
+        ax.set_title("Sub Head Breakdown", fontsize=12, fontweight="bold")
         
-            axes[0].annotate(
-                f"{row['Sub Head']} ({row['Count']})",
-                xy=(0.8 * x, 0.8 * y),  # anchor point
-                xytext=(label_x, label_y),  # label location
-                ha="left" if x > 0 else "right",
-                va="center",
-                fontsize=8,
-                fontweight="medium",
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=0.5),
-                arrowprops=dict(arrowstyle="-", lw=0.7, color="gray")
-            )
-        
+        # Ensure layout fits
+        plt.tight_layout()
+
         # Optional: Add title
 
 
@@ -666,6 +655,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
