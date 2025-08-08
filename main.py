@@ -285,9 +285,9 @@ def apply_common_filters(df, prefix=""):
     # Apply filters based on session state values
    # Apply filters based on session state values
     if st.session_state.get(prefix + "insp"):
-        df_filtered = df_filtered[
-            df_filtered["Inspection By"].apply(lambda x: match_exact(st.session_state[prefix + "insp"], x))
-        ]
+    selected = st.session_state[prefix + "insp"]
+    df_filtered = df_filtered[df_filtered["Inspection By"].isin(selected if isinstance(selected, list) else [selected])]
+
     
     if st.session_state.get(prefix + "action"):
         df_filtered = df_filtered[
@@ -706,6 +706,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
