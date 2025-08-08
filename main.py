@@ -619,7 +619,8 @@ if not editable_filtered.empty:
     styled_df = editable_df.style.applymap(highlight_pending, subset=["Feedback"])
 
     st.markdown("#### 🔍 Preview: Feedbacks marked 'Pending' in red")
-    st.dataframe(styled_df, use_container_width=True)
+    st.write(styled_df)
+
 
     # Store editable version in session_state
     if (
@@ -697,6 +698,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
