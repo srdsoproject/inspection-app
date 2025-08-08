@@ -478,12 +478,26 @@ with tabs[0]:
         type_display = ", ".join(st.session_state.view_type_filter) if st.session_state.view_type_filter else "All Types"
         location_display = st.session_state.view_location_filter or "All Locations"
     
+        # Title
         fig.suptitle("📊 Sub Head Breakdown", fontsize=14, fontweight="bold")
-        fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}   |   Type: {type_display}   |   Location: {location_display}",
-                 ha='center', fontsize=9, color='gray')
+        
+        # Dynamic bottom text
+        y_base = 0.02  # Push it slightly higher to avoid clipping
+        line_spacing = 0.015
+        
+        fig.text(
+            0.5, y_base + line_spacing,
+            f"Date Range: {dr}   |   Department: {heads}   |   Type: {type_display}   |   Location: {location_display}",
+            ha='center', fontsize=9, color='gray'
+        )
+        
         if st.session_state.view_sub_filter:
-            fig.text(0.5, 0.01, f"Sub Head Filter: {st.session_state.view_sub_filter}", 
-     ha='center', fontsize=9, color='black', fontweight='bold')
+            fig.text(
+                0.5, y_base,
+                f"Sub Head Filter: {st.session_state.view_sub_filter}",
+                ha='center', fontsize=9, color='black', fontweight='bold'
+            )
+
 
     
         # --- Output ---
@@ -627,6 +641,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
