@@ -499,7 +499,7 @@ with tabs[0]:
         
             # Annotate with Sub Head labels
             for wedge, row in zip(wedges, subhead_summary.itertuples()):
-                if row.Sub_Head == "Total":
+                if row._1 == "Total":
                     continue
                 ang = (wedge.theta2 + wedge.theta1) / 2.0
                 x = np.cos(np.deg2rad(ang))
@@ -687,6 +687,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
