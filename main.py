@@ -44,28 +44,31 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ---------- GOOGLE SHEETS CONNECTION ----------
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
+import streamlit as st
+import pandas as pd
+import gspread
+import re
+from google.oauth2.service_account import Credentials
 
-try:
+# ---------- STEP 1: CONNECT TO GOOGLE SHEETS ----------
+@st.cache_resource
+def connect_to_gsheet():
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
     service_account_info = dict(st.secrets["gcp_service_account"])
     if "private_key" in service_account_info:
         service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
 
     creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     gc = gspread.authorize(creds)
-
     SHEET_ID = "1_WQyJCtdXuAIQn3IpFTI4KfkrveOHosNsvsZn42jAvw"
     SHEET_NAME = "Sheet1"
-    sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+    return gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
-    st.sidebar.success("✅ Connected to Google Sheets!")
-
-except Exception as e:
-    st.sidebar.error(f"❌ Failed to connect: {e}")
-    st.stop()
+sheet = connect_to_gsheet()
+st.sidebar.success("✅ Connected to Google Sheets!")
 
 # ---------- SIDEBAR ----------
 st.sidebar.markdown(f"👤 Logged in as: **{st.session_state.user['name']}**")
@@ -75,7 +78,7 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state.user = {}
     st.rerun()
 
-# ---------- HELPER FUNCTIONS & CONSTANTS ----------
+# ---------- CONSTANT LISTS ----------
 station_list = ['BRB', 'MLM', 'BGVN', 'JNTR', 'PRWD', 'WSB', 'PPJ', 'JEUR', 'KEM', 'BLNI', 'DHS', 'KWV', 'WDS',
                 'MA', 'AAG', 'MKPT', 'MO', 'MVE', 'PK', 'BALE', "SUR", 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'DUD',
                 'KUI', 'GDGN', 'GUR', 'HHD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'ARAG',
@@ -107,7 +110,7 @@ SUBHEAD_LIST = {
     "C&W": [ "BRAKE BINDING", 'WHEEL DEFECT', 'TRAIN PARTING', 'PASSENGER AMENITIES', 'AIR PRESSURE LEAKAGE',
             'DAMAGED UNDER GEAR PARTS', 'MISC'],
 }
-INSPECTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
+INSPECTION_BY_LIST = [""] + ["HQ OFFICERS",'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
                              'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC',
                              'DME,DEE/TRD', 'DFM', 'DSTE/HQ', 'DSTE/KLBG', 'ADEN/T/SUR', 'ADEN/W/SUR', 'ADEN/KWV',
                              'ADEN/PVR', 'ADEN/LUR', 'ADEN/KLBG', 'ADSTE/SUR', 'ADSTE/I/KWV', 'ADSTE/II/KWV',
@@ -115,179 +118,136 @@ INSPECTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 
                              'ADFM/I', 'ADFMII', 'ASC', 'ADSO']
 ACTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
                          'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC']
-# -------------------- CONSTANT LISTS --------------------
-# Station, Footplate & Gate Lists
-import re
 
+# ---------- HELPER FUNCTIONS ----------
 def normalize(text):
-    """Convert feedback text to a clean lowercase string."""
     if not isinstance(text, str):
         return ""
     text = text.lower()
-    text = re.sub(r'\s+', ' ', text)  # collapse multiple spaces
+    text = re.sub(r'\s+', ' ', text)
     return text.strip()
 
-def classify_feedback(feedback):
-    if not isinstance(feedback, str) or feedback.strip() == "":
-        return "Pending"
+import re
 
-    feedback_normalized = normalize(feedback)
+def classify_feedback(feedback, user_remark=""):
+    def normalize(text):
+        return text.lower().strip()
 
-    # Make sure it's a string
-    if not isinstance(feedback_normalized, str):
-        feedback_normalized = ""
+    def classify_single(text):
+        if not isinstance(text, str) or text.strip() == "":
+            return None  # Skip empty strings
 
-    date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', feedback_normalized))
+        text_normalized = normalize(text)
+        date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', text_normalized))
 
-    pending_keywords = [
-        "will be", "needful", "to be", "pending", "not done", "awaiting",
-        "waiting", "yet to", "next time", "follow up", "tdc", "t d c",
-        "will attend", "will be attended", "scheduled", "reminder",
-        "to inform", "to counsel", "to submit", "to do", "to replace",
-        "remains", "still", "under process", "not yet", "to be done",
-        "will be ensure", "during next", "action will be taken", "Will be supplied shortly."
-    ]
+        resolved_keywords = [
+            "attended", "solved", "submitted", "done", "completed", "informed", "confirmed by", "message given",
+            "tdc work completed", "replaced", "msg given", "msg sent", "counseled", "info shared", "communicated",
+            "counselled", "gate will be closed soon", "attending at the time", "handled", "resolved", "action taken",
+            "spoken to", "warned", "counselling", "hubli", "working normal", "met", "discussion held", "report sent",
+            "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited", "briefed",
+            "guided", "handover", "working properly", "checked found working", "supply restored", "noted please",
+            "updated by", "adv to", "counselled the staff", "complied", "checked and found", "maintained",
+            "for needful action", "provided at", "in working condition", "is working", "found working", "informed",
+            "equipment is working", "item is working", "as per plan", "putright", "put right", "operational feasibility",
+            "will be provided", "will be supplied shortly", "advised to ubl"
+        ]
 
-    resolved_keywords = [
-        "attended", "solved", "submitted", "done", "completed", "informed", "Confirmed by","confirmed by", "message given",
-        "tdc work completed", "replaced", "message given", "msg given", "msg sent", "counseled", "informed to", "Counseled ",
-        "info shared", "informed to", "communicated", "counseled", "counselled", "Gate will be closed soon", "attending at the time", "Attending at time",
-        "handled", "resolved", "action taken", "spoken to", "talked to", "warned", "counselling", "HUBLI", "working normal", "Working Normal",
-        "met", "discussion held", "report sent", "notified", "explained", "NIL","nil", "na","NA", 'TLC', 'tlc',
-        "work completed", "acknowledged", "visited", "briefed", "guided", "DG sets handover to KLBG", "handover",
-        "message", "msg", "on ", "working properly", "checked found working", "Supply restored", 
-        "noted please", "noted", "updated by", "adv to", "counselled the staff", "complied",
-        "counselled the", "checked and found", "maintained", "for needful action", "Advised to ETL/CTO/UBL",
-        "provided at", "in working condition", "is working", "found working", "INFORMED ",
-        "equipment is working", "item is working", "As per plan", "Advised to ETL/",
-        "noted it will be attended during the next primary maintenance", "Putright", "putright", "put right", "Put right",
-        "operational feasibility", "will be provided", "will be supplied shortly", "advised to ubl"
-    ]
+        pending_keywords = [
+            "will be", "needful", "to be", "pending", "not done", "awaiting", "waiting", "yet to", "next time",
+            "follow up", "tdc", "t d c", "will attend", "will be attended", "scheduled", "reminder", "to inform",
+            "to counsel", "to submit", "to do", "to replace", "prior", "remains", "still", "under process", "not yet",
+            "to be done", "will be ensure", "during next", "action will be taken", "will be supplied shortly"
+        ]
 
-    found_resolved = any(kw in feedback_normalized for kw in resolved_keywords)
-    found_pending = any(kw in feedback_normalized for kw in pending_keywords)
+        if any(kw in text_normalized for kw in resolved_keywords) or date_found:
+            return "Resolved"
+        if any(kw in text_normalized for kw in pending_keywords):
+            return "Pending"
+        return None
 
-    if found_resolved or date_found:
+    feedback_result = classify_single(feedback)
+    user_remark_result = classify_single(user_remark) if user_remark and user_remark.strip() else None
+
+    if feedback_result == "Resolved" or user_remark_result == "Resolved":
         return "Resolved"
-    if found_pending:
+    if feedback_result == "Pending" or user_remark_result == "Pending":
         return "Pending"
-    return "Pending"
 
+    return "Pending"  # Default fallback
 
+# ---------- LOAD DATA ----------
+@st.cache_data(ttl=300)
 def load_data():
-    """Loads all records from the Google Sheet and returns a cleaned DataFrame."""
-
-    VALID_INSPECTIONS = [
-        "FOOTPLATE INSPECTION",
-        "STATION INSPECTION",
-        "LC GATE INSPECTION",
-        "MISC",
-        "COACHING DEPOT",
-        "ON TRAIN",
-        "SURPRISE/AMBUSH INSPECTION",
-    ]
-
     REQUIRED_COLS = [
-        "Date of Inspection",
-        "Type of Inspection",
-        "Location",
-        "Head",
-        "Sub Head",
-        "Deficiencies Noted",
-        "Inspection By",
-        "Action By",
-        "Feedback",
+        "Date of Inspection", "Type of Inspection", "Location",
+        "Head", "Sub Head", "Deficiencies Noted",
+        "Inspection By", "Action By", "Feedback",
         "User Feedback/Remark"
     ]
-
     try:
         data = sheet.get_all_values()
-        if not data or not data[0] or len(data) < 2:
+        if not data or len(data) < 2:
             return pd.DataFrame(columns=REQUIRED_COLS)
 
-        # Normalize headers to avoid space/case issues
         headers = [c.strip() for c in data[0]]
         df = pd.DataFrame(data[1:], columns=headers)
 
-        # Force "User Feedback/Remark" column to exist
-        if "User Feedback/Remark" not in df.columns:
-            # Try fuzzy matches in case of hidden space or typo
-            for col in df.columns:
-                if col.replace(" ", "").lower() == "userfeedback/remark":
-                    df.rename(columns={col: "User Feedback/Remark"}, inplace=True)
-                    break
-
-        # Ensure all required columns are present
         for col in REQUIRED_COLS:
             if col not in df.columns:
                 df[col] = ""
 
-        # Clean date
         df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], errors="coerce")
-
-        # Validate inspection type
-        df["Type of Inspection"] = df["Type of Inspection"].apply(
-            lambda x: x if x in VALID_INSPECTIONS else ""
-        )
-
-        # Clean location
         df["Location"] = df["Location"].astype(str).str.strip().str.upper()
-        df["Location"] = df["Location"].apply(
-            lambda x: x if x in [loc.upper() for loc in footplate_list] else ""
-        )
+        df["_sheet_row"] = df.index + 2
 
         return df
-
     except Exception as e:
         st.error(f"❌ Error loading Google Sheet: {e}")
         return pd.DataFrame(columns=REQUIRED_COLS)
 
+# ---------- SESSION STATE ----------
+if "df" not in st.session_state:
+    st.session_state.df = load_data()
+
+df = st.session_state.df
 
 
-def match_exact(value_list, cell_value):
-    """Checks if any value in value_list exactly matches a comma-separated item in cell_value."""
-    if not isinstance(cell_value, str):
-        return False
-    cell_items = [item.strip() for item in cell_value.split(',')]
-    return any(val == item for val in value_list for item in cell_items)
-# ---------- Update Feedback Column Only ----------
+# ---------- UPDATE FEEDBACK ----------
 def update_feedback_column(edited_df):
     header = sheet.row_values(1)
+
     try:
-        feedback_col = header.index("User Feedback/Remark") + 1  # gspread is 1-based
+        feedback_col = header.index("Feedback") + 1
     except ValueError:
-        st.error("⚠️ 'User Feedback/Remark' column not found in Google Sheet")
+        st.error("⚠️ 'Feedback' column not found")
         return
 
-    updates = 0
-    for _, row in edited_df.iterrows():
-        sheet_row = int(row["_sheet_row"])
-        new_value = row["User Feedback/Remark"]
+    try:
+        remark_col = header.index("User Feedback/Remark") + 1
+    except ValueError:
+        st.error("⚠️ 'User Feedback/Remark' column not found")
+        return
 
-        # Get the current value from Google Sheet (optional optimization)
-        current_value = sheet.cell(sheet_row, feedback_col).value
-
-        # Only update if the value actually changed
-        if str(new_value).strip() != str(current_value).strip():
-            sheet.update_cell(sheet_row, feedback_col, new_value)
-            updates += 1
-
-    st.success(f"✅ Feedback updated for {updates} row(s) in Google Sheet")
-
-    # Build a list of ranges and values for batch update
     updates = []
     for _, row in edited_df.iterrows():
         row_number = int(row["_sheet_row"])
-        new_value = row["User Feedback/Remark"] if pd.notna(row["User Feedback/Remark"]) else ""
-        cell_range = gspread.utils.rowcol_to_a1(row_number, feedback_col)
-        updates.append({"range": cell_range, "values": [[new_value]]})
+        feedback_value = row["Feedback"] if pd.notna(row["Feedback"]) else ""
+        remark_value = row["User Feedback/Remark"] if pd.notna(row["User Feedback/Remark"]) else ""
+
+        feedback_cell = gspread.utils.rowcol_to_a1(row_number, feedback_col)
+        remark_cell = gspread.utils.rowcol_to_a1(row_number, remark_col)
+
+        updates.append({"range": feedback_cell, "values": [[feedback_value]]})
+        updates.append({"range": remark_cell, "values": [[remark_value]]})
+
+        # Update session state again just to be safe
+        st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "Feedback"] = feedback_value
+        st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "User Feedback/Remark"] = remark_value
 
     if updates:
-        # Execute batch update in a single request
         body = {"valueInputOption": "USER_ENTERED", "data": updates}
         sheet.spreadsheet.values_batch_update(body)
-
-
 
 
 def apply_common_filters(df, prefix=""):
@@ -322,7 +282,6 @@ def apply_common_filters(df, prefix=""):
         )
 
     df_filtered = df.copy()
-
     # Apply filters based on session state values
     if st.session_state.get(prefix + "insp"):
         df_filtered = df_filtered[
@@ -349,76 +308,81 @@ def apply_common_filters(df, prefix=""):
 # ---------- MAIN APP ----------
 st.title("📋 Safety Inspection Viewer")
 tabs = st.tabs(["📊 View Records"])
-
 with tabs[0]:
-    st.subheader("📊 View & Filter Records")
+# ---------- GLOBAL CONSTANTS ----------
     VALID_INSPECTIONS = [
-        "FOOTPLATE INSPECTION",
-        "STATION INSPECTION",
-        "LC GATE INSPECTION",
-        "MISC",
-        "COACHING DEPOT",
-        "ON TRAIN",
-        "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION",
-        # add more as needed
+        "FOOTPLATE INSPECTION", "STATION INSPECTION", "LC GATE INSPECTION",
+        "MISC", "COACHING DEPOT", "ON TRAIN", "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION"
     ]
-    station_list = ['BRB', 'MLM', 'BGVN', 'JNTR', 'PRWD', 'WSB', 'PPJ', 'JEUR', 'KEM', 'BLNI', 'DHS', 'KWV', 'WDS',
-                'MA', 'AAG', 'MKPT', 'MO', 'MVE', 'PK', 'BALE', "SUR", 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'DUD',
-                'KUI', 'GDGN', 'GUR', 'HHD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'ARAG',
-                'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB', 'SEI', 'BTW',
-                'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR', 'NTPC', 'MRJ', 'BHLI', 'NTPC' ]
-
-    footplate_list = station_list + gate_list +["SUR-DD", "SUR-WADI", "LUR-KWV", "KWV-MRJ", "DD-SUR", "WADI-SUR", "KWV-LUR", "MRJ-KWV"]
-
-    gate_list = ['LC-19', 'LC-22A', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37', 'LC-40',
-             'LC-41', 'LC-43', 'LC-44', 'LC-45', 'LC-46C', 'LC-54', 'LC-61', 'LC-66', 'LC-74', 'LC-76', 'LC-78',
-             'LC-82', 'LC-1', 'LC-60A', 'LC-1 TLT ZCL', 'LC-1 ACC', 'LC-2 ACC', 'LC-91', 'LC-22', 'LC-24', 'LC-31',
-             'LC-32', 'LC-49', 'LC-70', 'LC-10', 'LC-34', 'LC-36', 'LC-44', 'LC-47', 'LC-55', 'LC-59', 'LC-2', 
-             'LC-4', 'LC-42', 'LC-02', 'LC-31', 'LC-128', 'LC-63', 'LC-04', 'LC-67', 'LC-77','LC-75', 'LC-64','LC-65',
-             'LC-5', 'LC-6', 'LC-57', 'LC-62', 'LC-66', 'LC-70', 'LC-39', 'LC-2/C', 'LC-6/C', 'LC-10', 'LC-11', 'LC-03',
-             'LC-15/C', 'LC-21', 'LC-26-A', 'LC-34', 'LC-36', 'LC-44', 'LC-47', 'LC-55', 'LC-57', 'LC-59', 'LC-60',
-             'LC-61']
-
-
-
-    df = load_data()
-   
+    
+    station_list = [
+        'BRB','MLM','BGVN','JNTR','PRWD','WSB','PPJ','JEUR','KEM','BLNI','DHS','KWV','WDS','MA','AAG',
+        'MKPT','MO','MVE','PK','BALE',"SUR",'TKWD','HG','TLT','AKOR','NGS','BOT','DUD','KUI','GDGN','GUR',
+        'HHD','SVG','BBD','TJSP','KLBG','HQR','MR','SDB','WADI','ARAG','BLNK','SGRE','KVK','LNP','DLGN',
+        'JTRD','MSDG','JVA','WSD','SGLA','PVR','MLB','SEI','BTW','PJR','DRSV','YSI','KMRD','DKY','MRX',
+        'OSA','HGL','LUR','NTPC','MRJ','BHLI','NTPC'
+    ]
+    
+    gate_list = [
+        'LC-19','LC-22A','LC-25','LC-26','LC-27C','LC-28','LC-30','LC-31','LC-35','LC-37','LC-40','LC-41',
+        'LC-43','LC-44','LC-45','LC-46C','LC-54','LC-61','LC-66','LC-74','LC-76','LC-78','LC-82','LC-1',
+        'LC-60A','LC-1 TLT ZCL','LC-1 ACC','LC-2 ACC','LC-91','LC-22','LC-24','LC-32','LC-49','LC-70',
+        'LC-10','LC-34','LC-36','LC-47','LC-55','LC-59','LC-2','LC-4','LC-42','LC-02','LC-128','LC-63',
+        'LC-04','LC-67','LC-77','LC-75','LC-64','LC-65','LC-5','LC-6','LC-57','LC-62','LC-39','LC-2/C',
+        'LC-6/C','LC-11','LC-03','LC-15/C','LC-21','LC-26-A','LC-60','LC-61'
+    ]
+    
+    footplate_list = station_list + gate_list + [
+        "SUR-DD","SUR-WADI","LUR-KWV","KWV-MRJ","DD-SUR","WADI-SUR","KWV-LUR","MRJ-KWV"
+    ]
+    
+    # ---------- DATA LOAD ----------
+    @st.cache_data(show_spinner="Loading data...", persist="disk")
+    def get_data():
+        return load_data()
+    
+    if "df" not in st.session_state:
+        st.session_state.df = get_data()
+    
+    df = st.session_state.df.copy()
+    
     if df.empty:
         st.warning("No records found")
     else:
         df["Date of Inspection"] = pd.to_datetime(df["Date of Inspection"], format="%d.%m.%y", errors="coerce")
         df["_original_sheet_index"] = df.index
-
-    for col in ["Type of Inspection", "Location", "Head", "Sub Head", "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"]:
+    
+    for col in ["Type of Inspection", "Location", "Head", "Sub Head", "Deficiencies Noted", 
+                "Inspection By", "Action By", "Feedback", "User Feedback/Remark"]:
         if col not in df.columns:
             df[col] = ""
-
+    
     df["Status"] = df["Feedback"].apply(classify_feedback)
-
-    # Filters
+    
+    # ---------- FILTERS ----------
     start_date, end_date = st.date_input(
         "📅 Select Date Range",
         [df["Date of Inspection"].min(), df["Date of Inspection"].max()],
         key="view_date_range"
     )
-
+    
     col1, col2 = st.columns(2)
     col1.multiselect("Type of Inspection", VALID_INSPECTIONS, key="view_type_filter")
     col2.selectbox("Location", [""] + footplate_list, key="view_location_filter")
-
+    
     col3, col4 = st.columns(2)
     col3.multiselect("Head", HEAD_LIST[1:], key="view_head_filter")
     sub_opts = sorted({s for h in st.session_state.view_head_filter for s in SUBHEAD_LIST.get(h, [])})
     col4.selectbox("Sub Head", [""] + sub_opts, key="view_sub_filter")
-
+    
     selected_status = st.selectbox("🔘 Status", ["All", "Pending", "Resolved"], key="view_status_filter")
-
-    # Apply Filters
+    
+    # ---------- APPLY FILTERS ----------
     filtered = df[
         (df["Date of Inspection"] >= pd.to_datetime(start_date)) &
         (df["Date of Inspection"] <= pd.to_datetime(end_date))
     ]
-
+    
     if st.session_state.view_type_filter:
         filtered = filtered[filtered["Type of Inspection"].isin(st.session_state.view_type_filter)]
     if st.session_state.view_location_filter:
@@ -429,81 +393,63 @@ with tabs[0]:
         filtered = filtered[filtered["Sub Head"] == st.session_state.view_sub_filter]
     if selected_status != "All":
         filtered = filtered[filtered["Status"] == selected_status]
-
+    
     filtered = apply_common_filters(filtered, prefix="view_")
     filtered = filtered.applymap(lambda x: x.replace("\n", " ") if isinstance(x, str) else x)
     filtered = filtered.sort_values("Date of Inspection")
 
-    st.write(f"🔹 Showing {len(filtered)} record(s) from **{start_date.strftime('%d.%m.%Y')}** to **{end_date.strftime('%d.%m.%Y')}**")
-
+    st.write(f"🔹 Showing {len(filtered)} record(s) from **{start_date.strftime('%d.%m.%Y')}** "
+             f"to **{end_date.strftime('%d.%m.%Y')}**")
     # Summary Counts Display
     pending_count = (filtered["Status"] == "Pending").sum()
     resolved_count = (filtered["Status"] == "Resolved").sum()
     total_count = len(filtered)
-
+    
     col_a, col_b, col_c = st.columns(3)
     col_a.metric("🟨 Pending", pending_count)
     col_b.metric("🟩 Resolved", resolved_count)
     col_c.metric("📊 Total Records", total_count)
 
     if not filtered.empty:
+        # ---------- EXISTING PENDING vs RESOLVED CHART ----------
         summary = filtered["Status"].value_counts().reindex(["Pending", "Resolved"], fill_value=0).reset_index()
         summary.columns = ["Status", "Count"]
-
-        # Add total row
         total_count = summary["Count"].sum()
         summary.loc[len(summary.index)] = ["Total", total_count]
 
-        # Title Info
         dr = f"{start_date.strftime('%d-%m-%Y')} to {end_date.strftime('%d-%m-%Y')}"
         heads = ", ".join(st.session_state.view_head_filter) if st.session_state.view_head_filter else "All Heads"
 
-        # Matplotlib chart + table
         fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
         wedges, texts, autotexts = axes[0].pie(
             summary.loc[summary["Status"] != "Total", "Count"],
             labels=summary.loc[summary["Status"] != "Total", "Status"],
             autopct=lambda pct: f"{pct:.1f}%\n({int(round(pct / 100 * total_count))})",
             startangle=90,
-            colors=["#1f77b4", "#7fc6f2"]
+            colors=["#b00020", "#137333"]  # Dark red & green
         )
         axes[0].set_title("", fontsize=12)
 
         # Table data
         table_data = [["Status", "Count"]] + summary.values.tolist()
         table_data.append(["Date Range", dr])
-
         type_filter = st.session_state.view_type_filter
         type_display = ", ".join(type_filter) if type_filter else "All Types"
         table_data.append(["Type of Inspection", type_display])
-
         location_display = st.session_state.view_location_filter or "All Locations"
         table_data.append(["Location", location_display])
-
         table_data.append(["Heads", heads])
-
         if st.session_state.view_sub_filter:
             table_data.append(["Sub Head", st.session_state.view_sub_filter])
         if selected_status != "All":
             table_data.append(["Filtered Status", selected_status])
-
         axes[1].axis('off')
         tbl = axes[1].table(cellText=table_data, loc='center')
         tbl.auto_set_font_size(False)
         tbl.set_fontsize(10)
         tbl.scale(1, 1.6)
 
-        # Bold the "Type of Inspection" row
-        for (row, col), cell in tbl.get_celld().items():
-            if row > 0:  # skip header
-                if tbl[row, 0].get_text().get_text() == "Type of Inspection":
-                    tbl[row, 0].get_text().set_weight("bold")
-                    tbl[row, 1].get_text().set_weight("bold")
-
         plt.tight_layout(rect=[0, 0.05, 1, 0.90])
-
-        # Add title & context
         fig.text(0.5, 0.96, "📈 Pending vs Resolved Records", ha='center', fontsize=14, fontweight='bold')
         fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}", ha='center', fontsize=10, color='gray')
 
@@ -511,8 +457,7 @@ with tabs[0]:
         plt.savefig(buf, format="png", dpi=200)
         buf.seek(0)
         plt.close()
-
-        st.image(buf, caption=None, use_column_width=True)
+        st.image(buf, use_column_width=True)
 
         st.download_button(
             "📥 Download Graph + Table (PNG)",
@@ -521,15 +466,90 @@ with tabs[0]:
             mime="image/png"
         )
 
+        # ---------- NEW SUB HEAD DISTRIBUTION CHART ----------
+
+        import numpy as np
+        from io import BytesIO
+        
+        if st.session_state.view_head_filter:  # Show only if head is selected
+            st.markdown("### 📊 Sub Head Distribution")
+        
+            subhead_summary = (
+                filtered.groupby("Sub Head")["Sub Head"]
+                .count()
+                .reset_index(name="Count")
+                .sort_values(by="Count", ascending=False)
+            )
+            total_subs = subhead_summary["Count"].sum()
+        
+            fig2, axes2 = plt.subplots(1, 2, figsize=(12, 5))
+            axes2 = np.atleast_1d(axes2)  # ensure it's an array
+        
+            wedges, texts, autotexts = axes2[0].pie(
+            subhead_summary["Count"],
+            startangle=90,
+            colors=plt.cm.Paired.colors,
+            radius=0.9,
+            autopct=lambda pct: f"{pct:.1f}%"        )
+
+        
+            for i, (wedge, row) in enumerate(zip(wedges, subhead_summary.itertuples())):
+                ang = (wedge.theta2 + wedge.theta1) / 2.0
+                x = np.cos(np.deg2rad(ang))
+                y = np.sin(np.deg2rad(ang))
+        
+                label_x = 1.3 * np.sign(x)
+                label_y = 1.1 * y
+        
+                label = f"{row._1} ({row.Count})"
+                axes2[0].text(
+                    label_x, label_y, label,
+                    ha="left" if x > 0 else "right",
+                    va="center",
+                    fontsize=8,
+                    bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=1)
+                )
+        
+                axes2[0].annotate(
+                    "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
+                    arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
+                )
+        
+            axes2[0].set_title("📈 Sub Head Distribution", fontsize=12, fontweight="bold")
+        
+            table_data = [["Sub Head", "Count"]] + subhead_summary.values.tolist()
+            table_data.append(["Total", total_subs])
+        
+            axes2[1].axis('off')
+            tbl = axes2[1].table(cellText=table_data, loc='center')
+            tbl.auto_set_font_size(False)
+            tbl.set_fontsize(10)
+            tbl.scale(1, 1.5)
+        
+            plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+        
+            buf2 = BytesIO()
+            plt.savefig(buf2, format="png", dpi=200, bbox_inches="tight")
+            buf2.seek(0)
+            plt.close()
+            st.image(buf2, use_column_width=True)
+        
+            st.download_button(
+                "📥 Download Sub Head Distribution (PNG)",
+                data=buf2,
+                file_name="subhead_distribution.png",
+                mime="image/png"
+            )
+
+
+
         export_df = filtered[[
             "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
             "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
         ]].copy()
-
         export_df["Date of Inspection"] = export_df["Date of Inspection"].dt.strftime('%d-%m-%Y')
         from io import BytesIO
-        from openpyxl.styles import Alignment
-            
+        from openpyxl.styles import Alignment    
         towb = BytesIO()
         with pd.ExcelWriter(towb, engine="openpyxl") as writer:
             export_df.to_excel(writer, index=False, sheet_name="Filtered Records")
@@ -546,8 +566,6 @@ with tabs[0]:
                     cell.alignment = Alignment(wrap_text=True, vertical="top")
         
         towb.seek(0)
-
-
         st.download_button(
             "📥 Export Filtered Records to Excel",
             data=towb,
@@ -555,88 +573,100 @@ with tabs[0]:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         st.markdown("### 📄 Preview of Filtered Records")
-           
 
-# Add hidden column with actual Google Sheet row numbers
+# Load once and keep in session
 st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
-# Make sure each row has a Google Sheet row number
-if "_sheet_row" not in filtered.columns:
-    filtered["_sheet_row"] = filtered.index + 2  # 2 = header + 1-based index
+editable_filtered = filtered.copy()
 
-# Columns shown to user (exclude _sheet_row)
-display_cols = [
-    "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-    "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
-    "User Feedback/Remark"
-]
+if not editable_filtered.empty:
+    if "_sheet_row" not in editable_filtered.columns:
+        editable_filtered["_sheet_row"] = editable_filtered.index + 2  
 
-# Editable copy (user doesn't see _sheet_row)
-editable_df = filtered[display_cols].copy()
-
-# Editor for user
-edited_df = st.data_editor(
-    editable_df,
-    use_container_width=True,
-    hide_index=True,
-    num_rows="fixed",
-    column_config={
-        "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
-    },
-    disabled=[
+    display_cols = [
         "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-        "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+        "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
+        "User Feedback/Remark"
     ]
-)
+    editable_df = editable_filtered[display_cols].copy()
 
-# Add back the hidden _sheet_row column
-edited_df["_sheet_row"] = filtered["_sheet_row"]
+    if (
+        "feedback_buffer" not in st.session_state
+        or not st.session_state.feedback_buffer.equals(editable_df)
+    ):
+        st.session_state.feedback_buffer = editable_df.copy()
 
-# Submit button
-if st.button("✅ Submit Feedback"):
-    update_feedback_column(edited_df)
-    st.success(f"✅ Feedback updated for {len(edited_df)} rows in Google Sheet")
-
-               
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    with st.form("feedback_form", clear_on_submit=False):
+        st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
+                 " | Columns:", st.session_state.feedback_buffer.shape[1])
+    
+        edited_df = st.data_editor(
+            st.session_state.feedback_buffer,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="fixed",
+            column_config={
+                "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+            },
+            disabled=[
+                "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+            ],
+            key="feedback_editor"
+        )
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            submitted = st.form_submit_button("✅ Submit Feedback")
+        with col2:
+            refresh_clicked = st.form_submit_button("🔄 Refresh Data")
+            if refresh_clicked:
+                st.session_state.df = load_data()
+                st.success("✅ Data refreshed successfully!")
+        #start from here
+        if submitted:
+    # Make sure both edited_df and editable_filtered exist and have the expected column
+            if "User Feedback/Remark" not in edited_df.columns or "Feedback" not in editable_filtered.columns:
+                st.error("⚠️ Required columns are missing from the data.")
+            else:
+                # Calculate the common index
+                common_index = edited_df.index.intersection(editable_filtered.index)
+        
+                if len(common_index) > 0:
+                    # Check which rows actually changed
+                    diffs_mask = (
+                        editable_filtered.loc[common_index, "User Feedback/Remark"]
+                        != edited_df.loc[common_index, "User Feedback/Remark"]
+                    )
+        
+                    if diffs_mask.any():
+                        diffs = edited_df.loc[common_index[diffs_mask]].copy()
+                        diffs["_sheet_row"] = editable_filtered.loc[diffs.index, "_sheet_row"].values
+                        diffs["User Feedback/Remark"] = diffs["User Feedback/Remark"].fillna("")
+        
+                        for idx, row in diffs.iterrows():
+                            user_remark = row["User Feedback/Remark"]
+        
+                            if not user_remark.strip():
+                                continue  # Skip empty remarks
+        
+                            combined = user_remark.strip()
+        
+                            # Update in diffs
+                            diffs.at[idx, "Feedback"] = combined
+                            diffs.at[idx, "User Feedback/Remark"] = ""
+        
+                            # Update in session state
+                            st.session_state.df.loc[idx, "Feedback"] = combined
+                            st.session_state.df.loc[idx, "User Feedback/Remark"] = ""
+        
+                        # Update Google Sheet
+                        update_feedback_column(diffs)
+        
+                        st.success(f"✅ Updated {len(diffs)} Feedback row(s) with replaced remarks.")
+                    else:
+                        st.info("ℹ️ No changes detected to save.")
+                else:
+                    st.warning("⚠️ No rows matched for update.")
 
 
 
