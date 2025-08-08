@@ -665,7 +665,7 @@ if not editable_filtered.empty:
         key="feedback_editor"
     )
 
-        col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1, 1])
         with col1:
             submitted = st.form_submit_button("✅ Submit Feedback")
         with col2:
@@ -718,5 +718,6 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
