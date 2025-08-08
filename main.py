@@ -511,7 +511,7 @@ with tabs[0]:
                 arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
             )
         
-        axes[0].set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
+        #axes[0].set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
         
         # --- Table ---
         table_data = [["Sub Head", "Count"]] + subhead_summary.values.tolist()
@@ -701,6 +701,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
