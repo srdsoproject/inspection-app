@@ -446,10 +446,21 @@ with tabs[0]:
         import numpy as np
         
         # Data preparation
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import pandas as pd
+        
+        # --- Sample DataFrame (replace this with your actual subhead_summary) ---
+        # subhead_summary = pd.DataFrame({
+        #     'Sub Head': ['A', 'B', 'C', 'D', 'E', 'F', 'Total'],
+        #     'Count': [50, 30, 10, 5, 3, 2, 100]
+        # })
+        
+        # --- Pie chart data preparation ---
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
         
-        # Grouping small segments as 'Others'
+        # Group small segments into "Others"
         threshold = 0.02
         total = pie_data["Count"].sum()
         pie_data["Percent"] = pie_data["Count"] / total
@@ -462,10 +473,11 @@ with tabs[0]:
             others_row = pd.DataFrame([{"Sub Head": "Others", "Count": others_sum}])
             major = pd.concat([major, others_row], ignore_index=True)
         
-        # Pie chart plotting
-        fig, ax = plt.subplots(figsize=(12, 7))
+        # --- Create figure with space for pie + table ---
+        fig, axes = plt.subplots(1, 2, figsize=(16, 8))  # Wider layout
         
-        wedges, texts, autotexts = ax.pie(
+        # --- Pie chart ---
+        wedges, texts, autotexts = axes[0].pie(
             major["Count"],
             startangle=90,
             autopct='%1.1f%%',
@@ -473,14 +485,12 @@ with tabs[0]:
             textprops=dict(color='black', fontsize=8)
         )
         
-        # Smart external labels
-        # Smart external labels with alternating L/R layout
+        # Alternating labels (left/right)
         for i, (wedge, (_, row)) in enumerate(zip(wedges, major.iterrows())):
             ang = (wedge.theta2 + wedge.theta1) / 2.0
             x = np.cos(np.deg2rad(ang))
             y = np.sin(np.deg2rad(ang))
-            
-            # Alternate label sides
+        
             place_on_right = (i % 2 == 0)
             label_x = 1.5 if place_on_right else -1.5
             label_y = 1.2 * y
@@ -488,7 +498,7 @@ with tabs[0]:
         
             label = f"{row['Sub Head']} ({row['Count']})"
         
-            ax.text(
+            axes[0].text(
                 label_x, label_y, label,
                 ha=align,
                 va="center",
@@ -496,15 +506,28 @@ with tabs[0]:
                 bbox=dict(facecolor="white", edgecolor="gray", alpha=0.7, pad=1)
             )
         
-            ax.annotate(
+            axes[0].annotate(
                 "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
                 arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
             )
-
         
-        # Formatting
-        ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
-        plt.tight_layout()
+        axes[0].set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
+        
+        # --- Table ---
+        table_data = [["Sub Head", "Count"]] + subhead_summary.values.tolist()
+        axes[1].axis('off')
+        
+        table_row_count = len(table_data)
+        row_scale = 1 + (table_row_count * 0.05)
+        
+        tbl = axes[1].table(cellText=table_data, loc='center')
+        tbl.auto_set_font_size(False)
+        tbl.set_fontsize(10)
+        tbl.scale(1.2, row_scale)
+        
+        # --- Final layout adjustments ---
+        plt.tight_layout(rect=[0, 0.06, 1, 0.94])
+        plt.show()
 
 
        
@@ -686,6 +709,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
