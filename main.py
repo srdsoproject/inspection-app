@@ -604,7 +604,7 @@ editable_filtered = filtered.copy()
 
 if not editable_filtered.empty:
     if "_sheet_row" not in editable_filtered.columns:
-        editable_filtered["_sheet_row"] = editable_filtered.index + 2
+        editable_filtered["_sheet_row"] = editable_filtered.index + 2  
 
     display_cols = [
         "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
@@ -613,27 +613,28 @@ if not editable_filtered.empty:
     ]
     editable_df = editable_filtered[display_cols].copy()
 
-    # 🔴 Preview with red highlight for pending remarks (before editing)
-    def highlight_pending(row):
-        color = 'color: red; font-weight: bold' if str(row["User Feedback/Remark"]).strip() else ''
-        return [color] * len(row)
+    # 🔴 Red font preview for 'Feedback' column where value is "Pending"
+    def highlight_pending_feedback(val):
+        return 'color: red; font-weight: bold' if str(val).strip().lower() == 'pending' else ''
 
-    styled_df = editable_df.style.apply(highlight_pending, axis=1)
-    st.markdown("#### 🔍 Preview: Pending remarks shown in red")
+    styled_df = editable_df.style.applymap(
+        highlight_pending_feedback, subset=["Feedback"]
+    )
+
+    st.markdown("#### 🔍 Preview (Pending Feedback in Red):")
     st.dataframe(styled_df, use_container_width=True)
 
-    # 🧠 Load buffer into session for editing
+    # Load into session state buffer for editing
     if (
         "feedback_buffer" not in st.session_state
         or not st.session_state.feedback_buffer.equals(editable_df)
     ):
         st.session_state.feedback_buffer = editable_df.copy()
 
-    # 📝 Editable form
     with st.form("feedback_form", clear_on_submit=False):
-        st.write("Rows:", st.session_state.feedback_buffer.shape[0],
+        st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
                  " | Columns:", st.session_state.feedback_buffer.shape[1])
-
+    
         edited_df = st.data_editor(
             st.session_state.feedback_buffer,
             use_container_width=True,
@@ -658,17 +659,18 @@ if not editable_filtered.empty:
                 st.session_state.df = load_data()
                 st.success("✅ Data refreshed successfully!")
 
-        # 🔁 Handle submission
         if submitted:
             if "User Feedback/Remark" not in edited_df.columns or "Feedback" not in editable_filtered.columns:
                 st.error("⚠️ Required columns are missing from the data.")
             else:
                 common_index = edited_df.index.intersection(editable_filtered.index)
+
                 if len(common_index) > 0:
                     diffs_mask = (
                         editable_filtered.loc[common_index, "User Feedback/Remark"]
                         != edited_df.loc[common_index, "User Feedback/Remark"]
                     )
+
                     if diffs_mask.any():
                         diffs = edited_df.loc[common_index[diffs_mask]].copy()
                         diffs["_sheet_row"] = editable_filtered.loc[diffs.index, "_sheet_row"].values
@@ -676,22 +678,30 @@ if not editable_filtered.empty:
 
                         for idx, row in diffs.iterrows():
                             user_remark = row["User Feedback/Remark"]
+
                             if not user_remark.strip():
-                                continue
+                                continue  # Skip empty remarks
+
                             combined = user_remark.strip()
+
+                            # Update in diffs
                             diffs.at[idx, "Feedback"] = combined
                             diffs.at[idx, "User Feedback/Remark"] = ""
+
+                            # Update in session state
                             st.session_state.df.loc[idx, "Feedback"] = combined
                             st.session_state.df.loc[idx, "User Feedback/Remark"] = ""
 
+                        # Update Google Sheet
                         update_feedback_column(diffs)
+
                         st.success(f"✅ Updated {len(diffs)} Feedback row(s) with replaced remarks.")
                     else:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
-else:
-    st.info("No records found.")
+
+
 
 
 
