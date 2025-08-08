@@ -468,12 +468,14 @@ with tabs[0]:
 
         # ---------- NEW SUB HEAD DISTRIBUTION CHART ----------
 
+        import matplotlib.pyplot as plt
         import numpy as np
         from io import BytesIO
         
         if st.session_state.view_head_filter:  # Show only if head is selected
             st.markdown("### 📊 Sub Head Distribution")
         
+            # ----- Prepare Sub Head Summary -----
             subhead_summary = (
                 filtered.groupby("Sub Head")["Sub Head"]
                 .count()
@@ -481,65 +483,84 @@ with tabs[0]:
                 .sort_values(by="Count", ascending=False)
             )
             total_subs = subhead_summary["Count"].sum()
+            subhead_summary.loc[len(subhead_summary.index)] = ["Total", total_subs]
         
-            fig2, axes2 = plt.subplots(1, 2, figsize=(12, 5))
-            axes2 = np.atleast_1d(axes2)  # ensure it's an array
+            # ----- Create Figure -----
+            fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         
-            wedges, texts, autotexts = axes2[0].pie(
-            subhead_summary["Count"],
-            startangle=90,
-            colors=plt.cm.Paired.colors,
-            radius=0.9,
-            autopct=lambda pct: f"{pct:.1f}%"        )
-
+            # ----- Pie Chart -----
+            wedges, texts, autotexts = axes[0].pie(
+                subhead_summary.loc[subhead_summary["Sub Head"] != "Total", "Count"],
+                startangle=90,
+                colors=plt.cm.Paired.colors,
+                radius=0.9,
+                autopct=lambda pct: f"{pct:.1f}%"
+            )
         
-            for i, (wedge, row) in enumerate(zip(wedges, subhead_summary.itertuples())):
+            # Annotate with Sub Head labels
+            for wedge, row in zip(wedges, subhead_summary.itertuples()):
+                if row.Sub_Head == "Total":
+                    continue
                 ang = (wedge.theta2 + wedge.theta1) / 2.0
                 x = np.cos(np.deg2rad(ang))
                 y = np.sin(np.deg2rad(ang))
-        
                 label_x = 1.3 * np.sign(x)
                 label_y = 1.1 * y
-        
-                label = f"{row._1} ({row.Count})"
-                axes2[0].text(
+                label = f"{row.Sub_Head} ({row.Count})"
+                axes[0].text(
                     label_x, label_y, label,
                     ha="left" if x > 0 else "right",
                     va="center",
                     fontsize=8,
                     bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=1)
                 )
-        
-                axes2[0].annotate(
+                axes[0].annotate(
                     "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
                     arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
                 )
         
-            axes2[0].set_title("📈 Sub Head Distribution", fontsize=12, fontweight="bold")
+            axes[0].set_title("📊 Sub Head Distribution", fontsize=12, fontweight="bold")
         
+            # ----- Table Data -----
             table_data = [["Sub Head", "Count"]] + subhead_summary.values.tolist()
-            table_data.append(["Total", total_subs])
-        
-            axes2[1].axis('off')
-            tbl = axes2[1].table(cellText=table_data, loc='center')
+            axes[1].axis('off')
+            tbl = axes[1].table(cellText=table_data, loc='center')
             tbl.auto_set_font_size(False)
             tbl.set_fontsize(10)
             tbl.scale(1, 1.5)
         
-            plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+            # ----- Annotations -----
+            start_date_str = start_date.strftime('%d-%m-%Y')
+            end_date_str = end_date.strftime('%d-%m-%Y')
+            dr = f"{start_date_str} to {end_date_str}"
+            heads = ", ".join(st.session_state.view_head_filter) if st.session_state.view_head_filter else "All Heads"
+            type_filter = st.session_state.view_type_filter
+            type_display = ", ".join(type_filter) if type_filter else "All Types"
+            location_display = st.session_state.view_location_filter or "All Locations"
         
-            buf2 = BytesIO()
-            plt.savefig(buf2, format="png", dpi=200, bbox_inches="tight")
-            buf2.seek(0)
+            fig.suptitle("📊 Sub Head Breakdown", fontsize=14, fontweight="bold")
+            fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}   |   Type: {type_display}   |   Location: {location_display}",
+                     ha='center', fontsize=9, color='gray')
+        
+            if st.session_state.view_sub_filter:
+                fig.text(0.5, 0.01, f"Sub Head Filter: {st.session_state.view_sub_filter}", ha='center', fontsize=9, color='gray')
+        
+            # ----- Save to Buffer -----
+            plt.tight_layout(rect=[0, 0.06, 1, 0.94])
+            buf = BytesIO()
+            plt.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+            buf.seek(0)
             plt.close()
-            st.image(buf2, use_column_width=True)
         
+            # ----- Display & Download -----
+            st.image(buf, use_column_width=True)
             st.download_button(
                 "📥 Download Sub Head Distribution (PNG)",
-                data=buf2,
+                data=buf,
                 file_name="subhead_distribution.png",
                 mime="image/png"
             )
+
 
 
 
@@ -666,6 +687,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
