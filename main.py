@@ -434,33 +434,43 @@ with tabs[0]:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
         # --- Pie chart ---
+        import numpy as np  # make sure this is imported at the top if not already
+
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"]
+        
+        # Draw pie chart
         wedges, texts, autotexts = axes[0].pie(
             pie_data["Count"],
             startangle=90,
             colors=plt.cm.Paired.colors,
             radius=0.9,
-            autopct=lambda pct: f"{pct:.1f}%"
+            autopct=lambda pct: f"{pct:.1f}%",
+            pctdistance=0.75  # percentage text slightly inside
         )
-    
+
+        # Place labels outside with arrows
         for wedge, (_, row) in zip(wedges, pie_data.iterrows()):
             ang = (wedge.theta2 + wedge.theta1) / 2.0
             x = np.cos(np.deg2rad(ang))
             y = np.sin(np.deg2rad(ang))
-            label_x = 1.3 * np.sign(x)
-            label_y = 1.1 * y
+        
+            label_x = 1.6 * x
+            label_y = 1.4 * y
+        
             label = f"{row['Sub Head']} ({row['Count']})"
-            axes[0].text(
-                label_x, label_y, label,
+        
+            axes[0].annotate(
+                label,
+                xy=(0.9 * x, 0.9 * y),  # arrow start
+                xytext=(label_x, label_y),  # label position
                 ha="left" if x > 0 else "right",
                 va="center",
                 fontsize=8,
-                bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=1)
+                fontweight="medium",
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=0.5),
+                arrowprops=dict(arrowstyle="-", lw=0.7, color="gray")
             )
-            axes[0].annotate(
-                "", xy=(0.9 * x, 0.9 * y), xytext=(label_x, label_y),
-                arrowprops=dict(arrowstyle="-", lw=0.8, color="black")
-            )
+
     
         axes[0].set_title("📊 Sub Head Distribution", fontsize=12, fontweight="bold")
     
@@ -641,6 +651,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
