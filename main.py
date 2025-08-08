@@ -640,19 +640,31 @@ if not editable_filtered.empty:
         st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
                  " | Columns:", st.session_state.feedback_buffer.shape[1])
     
-        edited_df = st.data_editor(
-            st.session_state.feedback_buffer,
-            use_container_width=True,
-            hide_index=True,
-            num_rows="fixed",
-            column_config={"User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")},
-          
-            disabled=[
-                "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
-            ],
-            key="feedback_editor"
-        )
+        # Pre-style the "User Feedback/Remark" column with red font if non-empty
+    styled_buffer = st.session_state.feedback_buffer.copy()
+    styled_buffer["User Feedback/Remark"] = styled_buffer["User Feedback/Remark"].apply(
+        lambda x: f'<span style="color:red">{x}</span>' if str(x).strip() else ""
+    )
+    
+    edited_df = st.data_editor(
+        styled_buffer,
+        use_container_width=True,
+        hide_index=True,
+        num_rows="fixed",
+        column_config={
+            "User Feedback/Remark": st.column_config.TextColumn(
+                "User Feedback/Remark",
+                disabled=False,
+                html=True  # Allow rendering HTML tags
+            )
+        },
+        disabled=[
+            "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+            "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+        ],
+        key="feedback_editor"
+    )
+
         col1, col2 = st.columns([1, 1])
         with col1:
             submitted = st.form_submit_button("✅ Submit Feedback")
@@ -706,4 +718,5 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
