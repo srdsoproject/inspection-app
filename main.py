@@ -597,8 +597,7 @@ with tabs[0]:
         )
         st.markdown("### 📄 Preview of Filtered Records")
 
-# Load once and keep in session
-st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
+# Load once and keep in sessionst.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
 editable_filtered = filtered.copy()
 
@@ -613,18 +612,16 @@ if not editable_filtered.empty:
     ]
     editable_df = editable_filtered[display_cols].copy()
 
-    # 🔴 Red font preview for 'Feedback' column where value is "Pending"
-    def highlight_pending_feedback(val):
-        return 'color: red; font-weight: bold' if str(val).strip().lower() == 'pending' else ''
+    # ⬇️ Preview: Show 'Pending' in red font in 'Feedback' column
+    def highlight_pending(val):
+        return "color: red; font-weight: bold" if str(val).strip().lower() == "pending" else ""
 
-    styled_df = editable_df.style.applymap(
-        highlight_pending_feedback, subset=["Feedback"]
-    )
+    styled_df = editable_df.style.applymap(highlight_pending, subset=["Feedback"])
 
-    st.markdown("#### 🔍 Preview (Pending Feedback in Red):")
+    st.markdown("#### 🔍 Preview: Feedbacks marked 'Pending' in red")
     st.dataframe(styled_df, use_container_width=True)
 
-    # Load into session state buffer for editing
+    # Store editable version in session_state
     if (
         "feedback_buffer" not in st.session_state
         or not st.session_state.feedback_buffer.equals(editable_df)
@@ -664,42 +661,43 @@ if not editable_filtered.empty:
                 st.error("⚠️ Required columns are missing from the data.")
             else:
                 common_index = edited_df.index.intersection(editable_filtered.index)
-
+        
                 if len(common_index) > 0:
                     diffs_mask = (
                         editable_filtered.loc[common_index, "User Feedback/Remark"]
                         != edited_df.loc[common_index, "User Feedback/Remark"]
                     )
-
+        
                     if diffs_mask.any():
                         diffs = edited_df.loc[common_index[diffs_mask]].copy()
                         diffs["_sheet_row"] = editable_filtered.loc[diffs.index, "_sheet_row"].values
                         diffs["User Feedback/Remark"] = diffs["User Feedback/Remark"].fillna("")
-
+        
                         for idx, row in diffs.iterrows():
                             user_remark = row["User Feedback/Remark"]
-
+        
                             if not user_remark.strip():
                                 continue  # Skip empty remarks
-
+        
                             combined = user_remark.strip()
-
+        
                             # Update in diffs
                             diffs.at[idx, "Feedback"] = combined
                             diffs.at[idx, "User Feedback/Remark"] = ""
-
+        
                             # Update in session state
                             st.session_state.df.loc[idx, "Feedback"] = combined
                             st.session_state.df.loc[idx, "User Feedback/Remark"] = ""
-
+        
                         # Update Google Sheet
                         update_feedback_column(diffs)
-
+        
                         st.success(f"✅ Updated {len(diffs)} Feedback row(s) with replaced remarks.")
                     else:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
