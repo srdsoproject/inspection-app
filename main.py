@@ -599,54 +599,43 @@ with tabs[0]:
 
 # Load once and keep in sessionst.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
-editable_filtered = filtered.copy()
+# Your earlier code...
+editable_df = editable_filtered[display_cols].copy()
 
-if not editable_filtered.empty:
-    if "_sheet_row" not in editable_filtered.columns:
-        editable_filtered["_sheet_row"] = editable_filtered.index + 2  
+# 🟥 Add this block to show red-highlighted feedback
+def highlight_pending(val):
+    return "color: red; font-weight: bold" if isinstance(val, str) and "pending" in val.lower() else ""
 
-    display_cols = [
-        "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-        "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
-        "User Feedback/Remark"
-    ]
-    editable_df = editable_filtered[display_cols].copy()
+styled_df = editable_df.style.applymap(highlight_pending, subset=["Feedback"])
+st.markdown("#### 🔍 Preview: Feedbacks marked 'Pending' in red")
+st.write(styled_df)
 
-    # ⬇️ Preview: Show 'Pending' in red font in 'Feedback' column
-    def highlight_pending(val):
-        return "color: red; font-weight: bold" if str(val).strip().lower() == "pending" else ""
+# Then continue with your editable editor
+if (
+    "feedback_buffer" not in st.session_state
+    or not st.session_state.feedback_buffer.equals(editable_df)
+):
+    st.session_state.feedback_buffer = editable_df.copy()
 
-    styled_df = editable_df.style.applymap(highlight_pending, subset=["Feedback"])
+with st.form("feedback_form", clear_on_submit=False):
+    st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
+             " | Columns:", st.session_state.feedback_buffer.shape[1])
 
-    st.markdown("#### 🔍 Preview: Feedbacks marked 'Pending' in red")
-    st.write(styled_df)
+    edited_df = st.data_editor(
+        st.session_state.feedback_buffer,
+        use_container_width=True,
+        hide_index=True,
+        num_rows="fixed",
+        column_config={
+            "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+        },
+        disabled=[
+            "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+            "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+        ],
+        key="feedback_editor"
+    )
 
-
-    # Store editable version in session_state
-    if (
-        "feedback_buffer" not in st.session_state
-        or not st.session_state.feedback_buffer.equals(editable_df)
-    ):
-        st.session_state.feedback_buffer = editable_df.copy()
-
-    with st.form("feedback_form", clear_on_submit=False):
-        st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
-                 " | Columns:", st.session_state.feedback_buffer.shape[1])
-    
-        edited_df = st.data_editor(
-            st.session_state.feedback_buffer,
-            use_container_width=True,
-            hide_index=True,
-            num_rows="fixed",
-            column_config={
-                "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
-            },
-            disabled=[
-                "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
-            ],
-            key="feedback_editor"
-        )
 
         col1, col2 = st.columns([1, 1])
         with col1:
@@ -698,6 +687,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
