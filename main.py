@@ -438,13 +438,28 @@ with tabs[0]:
         # --- Create figure ---
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
-               
+        # --- Pie chart ---
+            
+        # Filter data
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import numpy as np
+        
+        # Filter and sort data
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import numpy as np
+        
         # Data preparation
         import matplotlib.pyplot as plt
         import numpy as np
         import pandas as pd
         
-       
+        # --- Sample DataFrame (replace this with your actual subhead_summary) ---
+        # subhead_summary = pd.DataFrame({
+        #     'Sub Head': ['A', 'B', 'C', 'D', 'E', 'F', 'Total'],
+        #     'Count': [50, 30, 10, 5, 3, 2, 100]
+        # })
         
         # --- Pie chart data preparation ---
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
@@ -566,6 +581,8 @@ with tabs[0]:
         )
 
 
+
+
         export_df = filtered[[
             "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
             "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
@@ -597,46 +614,45 @@ with tabs[0]:
         )
         st.markdown("### 📄 Preview of Filtered Records")
 
-# Load once and keep in sessionst.markdown("### ✍️ Edit User Feedback/Remarks in Table")
+# Load once and keep in session
+st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
-# Your earlier code...
-editable_df = editable_filtered[display_cols].copy()
+editable_filtered = filtered.copy()
 
-# 🟥 Add this block to show red-highlighted feedback
-def highlight_pending(val):
-    return "color: red; font-weight: bold" if isinstance(val, str) and "pending" in val.lower() else ""
+if not editable_filtered.empty:
+    if "_sheet_row" not in editable_filtered.columns:
+        editable_filtered["_sheet_row"] = editable_filtered.index + 2  
 
-styled_df = editable_df.style.applymap(highlight_pending, subset=["Feedback"])
-st.markdown("#### 🔍 Preview: Feedbacks marked 'Pending' in red")
-st.write(styled_df)
+    display_cols = [
+        "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+        "Deficiencies Noted", "Inspection By", "Action By", "Feedback",
+        "User Feedback/Remark"
+    ]
+    editable_df = editable_filtered[display_cols].copy()
 
-# Then continue with your editable editor
-if (
-    "feedback_buffer" not in st.session_state
-    or not st.session_state.feedback_buffer.equals(editable_df)
-):
-    st.session_state.feedback_buffer = editable_df.copy()
+    if (
+        "feedback_buffer" not in st.session_state
+        or not st.session_state.feedback_buffer.equals(editable_df)
+    ):
+        st.session_state.feedback_buffer = editable_df.copy()
 
-with st.form("feedback_form", clear_on_submit=False):
-    st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
-             " | Columns:", st.session_state.feedback_buffer.shape[1])
-
-    edited_df = st.data_editor(
-        st.session_state.feedback_buffer,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="fixed",
-        column_config={
-            "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
-        },
-        disabled=[
-            "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-            "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
-        ],
-        key="feedback_editor"
-    )
-
-
+    with st.form("feedback_form", clear_on_submit=False):
+        st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
+                 " | Columns:", st.session_state.feedback_buffer.shape[1])
+    
+        edited_df = st.data_editor(
+            st.session_state.feedback_buffer,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="fixed",
+            column_config={"User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")},
+          
+            disabled=[
+                "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+            ],
+            key="feedback_editor"
+        )
         col1, col2 = st.columns([1, 1])
         with col1:
             submitted = st.form_submit_button("✅ Submit Feedback")
@@ -645,14 +661,17 @@ with st.form("feedback_form", clear_on_submit=False):
             if refresh_clicked:
                 st.session_state.df = load_data()
                 st.success("✅ Data refreshed successfully!")
-
+        #start from here
         if submitted:
+    # Make sure both edited_df and editable_filtered exist and have the expected column
             if "User Feedback/Remark" not in edited_df.columns or "Feedback" not in editable_filtered.columns:
                 st.error("⚠️ Required columns are missing from the data.")
             else:
+                # Calculate the common index
                 common_index = edited_df.index.intersection(editable_filtered.index)
         
                 if len(common_index) > 0:
+                    # Check which rows actually changed
                     diffs_mask = (
                         editable_filtered.loc[common_index, "User Feedback/Remark"]
                         != edited_df.loc[common_index, "User Feedback/Remark"]
@@ -687,14 +706,4 @@ with st.form("feedback_form", clear_on_submit=False):
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
-
-
-
-
-
-
-
-
-
-
 
