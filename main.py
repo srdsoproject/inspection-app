@@ -666,13 +666,13 @@ if not editable_filtered.empty:
     )
 
     col1, col2 = st.columns([1, 1])
-        with col1:
-            submitted = st.form_submit_button("✅ Submit Feedback")
-        with col2:
-            refresh_clicked = st.form_submit_button("🔄 Refresh Data")
-            if refresh_clicked:
-                st.session_state.df = load_data()
-                st.success("✅ Data refreshed successfully!")
+    with col1:
+        submitted = st.form_submit_button("✅ Submit Feedback")
+    with col2:
+        refresh_clicked = st.form_submit_button("🔄 Refresh Data")
+        if refresh_clicked:
+            st.session_state.df = load_data()
+            st.success("✅ Data refreshed successfully!")
         #start from here
         if submitted:
     # Make sure both edited_df and editable_filtered exist and have the expected column
@@ -718,6 +718,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
