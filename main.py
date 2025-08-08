@@ -438,28 +438,13 @@ with tabs[0]:
         # --- Create figure ---
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
-        # --- Pie chart ---
-            
-        # Filter data
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import numpy as np
-        
-        # Filter and sort data
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import numpy as np
-        
+               
         # Data preparation
         import matplotlib.pyplot as plt
         import numpy as np
         import pandas as pd
         
-        # --- Sample DataFrame (replace this with your actual subhead_summary) ---
-        # subhead_summary = pd.DataFrame({
-        #     'Sub Head': ['A', 'B', 'C', 'D', 'E', 'F', 'Total'],
-        #     'Count': [50, 30, 10, 5, 3, 2, 100]
-        # })
+       
         
         # --- Pie chart data preparation ---
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
@@ -581,8 +566,6 @@ with tabs[0]:
         )
 
 
-
-
         export_df = filtered[[
             "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
             "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
@@ -621,7 +604,7 @@ editable_filtered = filtered.copy()
 
 if not editable_filtered.empty:
     if "_sheet_row" not in editable_filtered.columns:
-        editable_filtered["_sheet_row"] = editable_filtered.index + 2  
+        editable_filtered["_sheet_row"] = editable_filtered.index + 2
 
     display_cols = [
         "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
@@ -630,94 +613,87 @@ if not editable_filtered.empty:
     ]
     editable_df = editable_filtered[display_cols].copy()
 
+    # 🔴 Preview with red highlight for pending remarks (before editing)
+    def highlight_pending(row):
+        color = 'color: red; font-weight: bold' if str(row["User Feedback/Remark"]).strip() else ''
+        return [color] * len(row)
+
+    styled_df = editable_df.style.apply(highlight_pending, axis=1)
+    st.markdown("#### 🔍 Preview: Pending remarks shown in red")
+    st.dataframe(styled_df, use_container_width=True)
+
+    # 🧠 Load buffer into session for editing
     if (
         "feedback_buffer" not in st.session_state
         or not st.session_state.feedback_buffer.equals(editable_df)
     ):
         st.session_state.feedback_buffer = editable_df.copy()
 
+    # 📝 Editable form
     with st.form("feedback_form", clear_on_submit=False):
-        st.write("Rows:", st.session_state.feedback_buffer.shape[0], 
+        st.write("Rows:", st.session_state.feedback_buffer.shape[0],
                  " | Columns:", st.session_state.feedback_buffer.shape[1])
-    
-        # Pre-style the "User Feedback/Remark" column with red font if non-empty
-    styled_buffer = st.session_state.feedback_buffer.copy()
-    styled_buffer["User Feedback/Remark"] = styled_buffer["User Feedback/Remark"].apply(
-        lambda x: f'<span style="color:red">{x}</span>' if str(x).strip() else ""
-    )
-    
-    edited_df = st.data_editor(
-        styled_buffer,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="fixed",
-        column_config={
-            "User Feedback/Remark": st.column_config.TextColumn(
-                "User Feedback/Remark",
-                disabled=False,
-                html=True  # Allow rendering HTML tags
-            )
-        },
-        disabled=[
-            "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-            "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
-        ],
-        key="feedback_editor"
-    )
 
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        submitted = st.form_submit_button("✅ Submit Feedback")
-    with col2:
-        refresh_clicked = st.form_submit_button("🔄 Refresh Data")
-        if refresh_clicked:
-            st.session_state.df = load_data()
-            st.success("✅ Data refreshed successfully!")
-        #start from here
+        edited_df = st.data_editor(
+            st.session_state.feedback_buffer,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="fixed",
+            column_config={
+                "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")
+            },
+            disabled=[
+                "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
+                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+            ],
+            key="feedback_editor"
+        )
+
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            submitted = st.form_submit_button("✅ Submit Feedback")
+        with col2:
+            refresh_clicked = st.form_submit_button("🔄 Refresh Data")
+            if refresh_clicked:
+                st.session_state.df = load_data()
+                st.success("✅ Data refreshed successfully!")
+
+        # 🔁 Handle submission
         if submitted:
-    # Make sure both edited_df and editable_filtered exist and have the expected column
             if "User Feedback/Remark" not in edited_df.columns or "Feedback" not in editable_filtered.columns:
                 st.error("⚠️ Required columns are missing from the data.")
             else:
-                # Calculate the common index
                 common_index = edited_df.index.intersection(editable_filtered.index)
-        
                 if len(common_index) > 0:
-                    # Check which rows actually changed
                     diffs_mask = (
                         editable_filtered.loc[common_index, "User Feedback/Remark"]
                         != edited_df.loc[common_index, "User Feedback/Remark"]
                     )
-        
                     if diffs_mask.any():
                         diffs = edited_df.loc[common_index[diffs_mask]].copy()
                         diffs["_sheet_row"] = editable_filtered.loc[diffs.index, "_sheet_row"].values
                         diffs["User Feedback/Remark"] = diffs["User Feedback/Remark"].fillna("")
-        
+
                         for idx, row in diffs.iterrows():
                             user_remark = row["User Feedback/Remark"]
-        
                             if not user_remark.strip():
-                                continue  # Skip empty remarks
-        
+                                continue
                             combined = user_remark.strip()
-        
-                            # Update in diffs
                             diffs.at[idx, "Feedback"] = combined
                             diffs.at[idx, "User Feedback/Remark"] = ""
-        
-                            # Update in session state
                             st.session_state.df.loc[idx, "Feedback"] = combined
                             st.session_state.df.loc[idx, "User Feedback/Remark"] = ""
-        
-                        # Update Google Sheet
+
                         update_feedback_column(diffs)
-        
                         st.success(f"✅ Updated {len(diffs)} Feedback row(s) with replaced remarks.")
                     else:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+else:
+    st.info("No records found.")
+
+
 
 
 
