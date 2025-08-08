@@ -606,7 +606,7 @@ if not editable_filtered.empty:
             hide_index=True,
             num_rows="fixed",
             column_config={    "User Feedback/Remark": st.column_config.TextColumn(
-        "User Feedback/Remark", multiline=True    ),    "Deficiencies Noted": st.column_config.TextColumn("Deficiencies Noted" )}
+            "User Feedback/Remark", multiline=True    ),    "Deficiencies Noted": st.column_config.TextColumn("Deficiencies Noted" )}
 
 
             
@@ -669,6 +669,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
