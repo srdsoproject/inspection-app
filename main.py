@@ -434,48 +434,54 @@ with tabs[0]:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     
         # --- Pie chart ---
-        import matplotlib.pyplot as plt
         import numpy as np
         
         # Data filtering
+        import matplotlib.pyplot as plt
+
+# Filter data
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
         
-        # Create figure
-        fig, ax = plt.subplots(figsize=(8, 6))
+        # Optional: Group very small values into "Others"
+        threshold = 0.02  # 2%
+        total = pie_data["Count"].sum()
+        pie_data["Percent"] = pie_data["Count"] / total
         
-        # Donut chart
+        # Group values below threshold
+        major = pie_data[pie_data["Percent"] >= threshold]
+        minor = pie_data[pie_data["Percent"] < threshold]
+        if not minor.empty:
+            others_sum = minor["Count"].sum()
+            major = major.append({"Sub Head": "Others", "Count": others_sum}, ignore_index=True)
+        
+        # Pie chart setup
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Create pie
         wedges, texts, autotexts = ax.pie(
-            pie_data["Count"],
-            labels=None,  # remove inline labels
-            colors=plt.cm.Paired.colors,
+            major["Count"],
             startangle=90,
-            radius=1.0,
             autopct='%1.1f%%',
-            pctdistance=0.75,
-            wedgeprops=dict(width=0.4)  # donut hole
+            pctdistance=0.8,
+            textprops=dict(color='black', fontsize=8),
+            wedgeprops=dict(width=0.5)
         )
         
-        # Add legend on the side
+        # External labels
         ax.legend(
             wedges,
-            [f"{label} ({count})" for label, count in zip(pie_data["Sub Head"], pie_data["Count"])],
+            [f"{label} ({count})" for label, count in zip(major["Sub Head"], major["Count"])],
             title="Sub Head",
             loc="center left",
             bbox_to_anchor=(1, 0.5),
             fontsize=8
         )
         
-        # Center title
-        ax.set_title("Sub Head Breakdown", fontsize=12, fontweight="bold")
-        
-        # Ensure layout fits
+        # Title and layout
+        ax.set_title("Sub Head Breakdown", fontsize=14, fontweight="bold")
         plt.tight_layout()
 
-        # Optional: Add title
-
-
-    
        
     
         # --- Table ---
@@ -655,6 +661,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
