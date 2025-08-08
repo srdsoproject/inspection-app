@@ -410,61 +410,6 @@ with tabs[0]:
     col_b.metric("🟩 Resolved", resolved_count)
     col_c.metric("📊 Total Records", total_count)
 
-    if not filtered.empty:
-        # ---------- EXISTING PENDING vs RESOLVED CHART ----------
-        summary = filtered["Status"].value_counts().reindex(["Pending", "Resolved"], fill_value=0).reset_index()
-        summary.columns = ["Status", "Count"]
-        total_count = summary["Count"].sum()
-        summary.loc[len(summary.index)] = ["Total", total_count]
-
-        dr = f"{start_date.strftime('%d-%m-%Y')} to {end_date.strftime('%d-%m-%Y')}"
-        heads = ", ".join(st.session_state.view_head_filter) if st.session_state.view_head_filter else "All Heads"
-
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-        wedges, texts, autotexts = axes[0].pie(
-            summary.loc[summary["Status"] != "Total", "Count"],
-            labels=summary.loc[summary["Status"] != "Total", "Status"],
-            autopct=lambda pct: f"{pct:.1f}%\n({int(round(pct / 100 * total_count))})",
-            startangle=90,
-            colors=["#b00020", "#137333"]  # Dark red & green
-        )
-        axes[0].set_title("", fontsize=12)
-
-        # Table data
-        table_data = [["Status", "Count"]] + summary.values.tolist()
-        table_data.append(["Date Range", dr])
-        type_filter = st.session_state.view_type_filter
-        type_display = ", ".join(type_filter) if type_filter else "All Types"
-        table_data.append(["Type of Inspection", type_display])
-        location_display = st.session_state.view_location_filter or "All Locations"
-        table_data.append(["Location", location_display])
-        table_data.append(["Heads", heads])
-        if st.session_state.view_sub_filter:
-            table_data.append(["Sub Head", st.session_state.view_sub_filter])
-        if selected_status != "All":
-            table_data.append(["Filtered Status", selected_status])
-        axes[1].axis('off')
-        tbl = axes[1].table(cellText=table_data, loc='center')
-        tbl.auto_set_font_size(False)
-        tbl.set_fontsize(10)
-        tbl.scale(1, 1.6)
-
-        plt.tight_layout(rect=[0, 0.05, 1, 0.90])
-        fig.text(0.5, 0.96, "📈 Pending vs Resolved Records", ha='center', fontsize=14, fontweight='bold')
-        fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}", ha='center', fontsize=10, color='gray')
-
-        buf = BytesIO()
-        plt.savefig(buf, format="png", dpi=200)
-        buf.seek(0)
-        plt.close()
-        st.image(buf, use_column_width=True)
-
-        st.download_button(
-            "📥 Download Graph + Table (PNG)",
-            data=buf,
-            file_name="status_summary.png",
-            mime="image/png"
-        )
 
         # ---------- NEW SUB HEAD DISTRIBUTION CHART ----------
 
@@ -537,7 +482,9 @@ with tabs[0]:
             fig.text(0.5, 0.03, f"Date Range: {dr}   |   Department: {heads}   |   Type: {type_display}   |   Location: {location_display}",
                      ha='center', fontsize=9, color='gray')
             if st.session_state.view_sub_filter:
-                fig.text(0.5, 0.01, f"Sub Head Filter: {st.session_state.view_sub_filter}", ha='center', fontsize=9, color='gray')
+                fig.text(0.5, 0.01, f"Sub Head Filter: {st.session_state.view_sub_filter}", 
+         ha='center', fontsize=9, color='black', fontweight='bold')
+
         
             # --- Output ---
             plt.tight_layout(rect=[0, 0.06, 1, 0.94])
@@ -680,6 +627,7 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
 
 
