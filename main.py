@@ -177,7 +177,7 @@ def classify_feedback(feedback, user_remark=""):
     return "Pending"  # Default fallback
 
 # ---------- LOAD DATA ----------
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=0)
 def load_data():
     REQUIRED_COLS = [
         "Date of Inspection", "Type of Inspection", "Location",
@@ -706,4 +706,5 @@ if not editable_filtered.empty:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
 
