@@ -111,13 +111,13 @@ SUBHEAD_LIST = {
             'DAMAGED UNDER GEAR PARTS', 'MISC'],
 }
 INSPECTION_BY_LIST = [""] + ["HQ OFFICER CCE/CR",'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
-                             'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC',
+                             'Sr.DEE/TRD', 'Sr.DEE/G','Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC',
                              'DME,DEE/TRD', 'DFM', 'DSTE/HQ', 'DSTE/KLBG', 'ADEN/T/SUR', 'ADEN/W/SUR', 'ADEN/KWV',
                              'ADEN/PVR', 'ADEN/LUR', 'ADEN/KLBG', 'ADSTE/SUR', 'ADSTE/I/KWV', 'ADSTE/II/KWV',
                              'ADME/SUR', 'AOM/GD', 'AOM/GEN', 'ACM/Cog', 'ACM/TC', 'ACM/GD', 'APO/GEN', 'APO/WEL',
                              'ADFM/I', 'ADFMII', 'ASC', 'ADSO']
 ACTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
-                         'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC']
+                         'Sr.DEE/TRD', 'Sr.DEE/G','Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC']
 
 # ---------- HELPER FUNCTIONS ----------
 def normalize(text):
@@ -154,11 +154,19 @@ def classify_feedback(feedback, user_remark=""):
         ]
 
         pending_keywords = [
-            "will be", "needful", "to be", "pending", "not done", "awaiting", "waiting", "yet to", "next time",
-            "follow up", "tdc", "t d c", "will attend", "will be attended", "scheduled", "reminder", "to inform",
-            "to counsel", "to submit", "to do", "to replace", "prior", "remains", "still", "under process", "not yet",
-            "to be done", "will be ensure", "during next", "action will be taken", "will be supplied shortly", 'not available','not updated'
-        ]
+    # Explicit status phrases
+    "work is going on", "tdc given", "target date", "expected by", "likely by", "planned by",
+    "will be", "needful", "to be", "pending", "not done", "awaiting", "waiting", "yet to", "next time",
+    "follow up", "tdc.", "tdc", "t d c", "will attend", "will be attended", "scheduled", "reminder", "to inform",
+    "to counsel", "to submit", "to do", "to replace", "prior", "remains", "still", "under process", "not yet",
+    "to be done", "will ensure", "during next", "action will be taken", "will be supplied shortly", "not available",
+    "not updated", "progress", "under progress", "to arrange", "awaited", "material awaited", "approval awaited",
+    "to procure", "yet pending", "incomplete", "tentative", "ongoing", "in progress", "being done",
+    "arranging", "waiting for", "subject to", "awaiting approval", "awaiting material", "awaiting confirmation",
+    "next schedule", "planned for", "will arrange", "proposed date", "to complete", "to be completed",
+    "likely completion", "expected completion", "not received", "awaiting response",    r"\b\d{1,2}[.]\d{1,2}[.]\d{2,4}\b",
+    r"\b\d{1,2}[/]\d{1,2}[/]\d{2,4}\b",
+    r"\b\d{1,2}[-]\d{1,2}[-]\d{2,4}\b"]
 
         if any(kw in text_normalized for kw in resolved_keywords) or date_found:
             return "Resolved"
@@ -212,11 +220,13 @@ if "df" not in st.session_state:
 
 df = st.session_state.df
 
+# ---------- ADD STATUS COLUMN ----------
 
 # ---------- UPDATE FEEDBACK ----------
 def update_feedback_column(edited_df):
     header = sheet.row_values(1)
 
+    # Get column indices (+1 because gspread is 1-based)
     try:
         feedback_col = header.index("Feedback") + 1
     except ValueError:
@@ -229,25 +239,59 @@ def update_feedback_column(edited_df):
         st.error("⚠️ 'User Feedback/Remark' column not found")
         return
 
+    try:
+        head_col = header.index("Head") + 1
+    except ValueError:
+        st.error("⚠️ 'Head' column not found")
+        return
+
+    try:
+        action_by_col = header.index("Action By") + 1
+    except ValueError:
+        st.error("⚠️ 'Action By' column not found")
+        return
+
+    try:
+        sub_head_col = header.index("Sub Head") + 1
+    except ValueError:
+        st.error("⚠️ 'Sub Head' column not found")
+        return
+
     updates = []
     for _, row in edited_df.iterrows():
         row_number = int(row["_sheet_row"])
+
         feedback_value = row["Feedback"] if pd.notna(row["Feedback"]) else ""
         remark_value = row["User Feedback/Remark"] if pd.notna(row["User Feedback/Remark"]) else ""
+        head_value = row["Head"] if pd.notna(row["Head"]) else ""
+        action_by_value = row["Action By"] if pd.notna(row["Action By"]) else ""
+        sub_head_value = row["Sub Head"] if pd.notna(row["Sub Head"]) else ""
 
+        # Get A1 notation for each cell to update
         feedback_cell = gspread.utils.rowcol_to_a1(row_number, feedback_col)
         remark_cell = gspread.utils.rowcol_to_a1(row_number, remark_col)
+        head_cell = gspread.utils.rowcol_to_a1(row_number, head_col)
+        action_by_cell = gspread.utils.rowcol_to_a1(row_number, action_by_col)
+        sub_head_cell = gspread.utils.rowcol_to_a1(row_number, sub_head_col)
 
+        # Append all updates to batch list
         updates.append({"range": feedback_cell, "values": [[feedback_value]]})
         updates.append({"range": remark_cell, "values": [[remark_value]]})
+        updates.append({"range": head_cell, "values": [[head_value]]})
+        updates.append({"range": action_by_cell, "values": [[action_by_value]]})
+        updates.append({"range": sub_head_cell, "values": [[sub_head_value]]})
 
-        # Update session state again just to be safe
+        # Update session state just to keep data consistent
         st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "Feedback"] = feedback_value
         st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "User Feedback/Remark"] = remark_value
+        st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "Head"] = head_value
+        st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "Action By"] = action_by_value
+        st.session_state.df.loc[st.session_state.df["_sheet_row"] == row_number, "Sub Head"] = sub_head_value
 
     if updates:
         body = {"valueInputOption": "USER_ENTERED", "data": updates}
         sheet.spreadsheet.values_batch_update(body)
+
 
 
 def apply_common_filters(df, prefix=""):
@@ -615,6 +659,20 @@ with tabs[0]:
         st.markdown("### 📄 Preview of Filtered Records")
 
 # Load once and keep in session
+# ---- Status calculation ----
+# ---- Status calculation ----
+def get_status(feedback, remark):
+    status = classify_feedback(feedback, remark)  # tumhara existing function
+    return status
+
+def color_text_status(status):
+    if status == "Pending":
+        return "🔴 Pending"
+    elif status == "Resolved":
+        return "🟢 Resolved"
+    else:
+        return status
+
 st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
 
 editable_filtered = filtered.copy()
@@ -629,6 +687,19 @@ if not editable_filtered.empty:
         "User Feedback/Remark"
     ]
     editable_df = editable_filtered[display_cols].copy()
+
+    # Insert Status column next to User Feedback/Remark
+    editable_df.insert(
+        editable_df.columns.get_loc("User Feedback/Remark") + 1,
+        "Status",
+        [
+            get_status(row["Feedback"], row["User Feedback/Remark"])
+            for _, row in editable_df.iterrows()
+        ]
+    )
+
+    # Add colored emoji prefix to Status for visual distinction
+    editable_df["Status"] = editable_df["Status"].apply(color_text_status)
 
     if (
         "feedback_buffer" not in st.session_state
@@ -645,14 +716,20 @@ if not editable_filtered.empty:
             use_container_width=True,
             hide_index=True,
             num_rows="fixed",
-            column_config={"User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark")},
-          
+            column_config={
+                "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark"),
+                "Status": st.column_config.TextColumn(
+                    "Status", 
+                    help="Pending = 🔴 Red, Resolved = 🟢 Green"
+                )
+            },
             disabled=[
                 "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
-                "Deficiencies Noted", "Inspection By", "Action By", "Feedback"
+                "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "Status"
             ],
             key="feedback_editor"
         )
+
         col1, col2 = st.columns([1, 1])
         with col1:
             submitted = st.form_submit_button("✅ Submit Feedback")
@@ -661,9 +738,9 @@ if not editable_filtered.empty:
             if refresh_clicked:
                 st.session_state.df = load_data()
                 st.success("✅ Data refreshed successfully!")
-        #start from here
+
         if submitted:
-    # Make sure both edited_df and editable_filtered exist and have the expected column
+            # Make sure both edited_df and editable_filtered exist and have the expected column
             if "User Feedback/Remark" not in edited_df.columns or "Feedback" not in editable_filtered.columns:
                 st.error("⚠️ Required columns are missing from the data.")
             else:
@@ -688,23 +765,100 @@ if not editable_filtered.empty:
                             if not user_remark.strip():
                                 continue  # Skip empty remarks
         
-                            combined = user_remark.strip()
+                            # === Pertains to S&T check and update ===
+                            if "Pertains to S&T" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "SIGNAL & TELECOM"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DSTE"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "SIGNAL & TELECOM"
+                                diffs.at[idx, "Action By"] = "Sr.DSTE"
+                                diffs.at[idx, "Sub Head"] = ""
+                            # === End of S&T logic ===
+                            if "Pertains to OPTG" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "OPTG"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DOM"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "OPTG"
+                                diffs.at[idx, "Action By"] = "Sr.DOM"
+                                diffs.at[idx, "Sub Head"] = ""
+
+                            
+                            if "Pertains to COMMERCIAL" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "COMMERCIAL"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DCM"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "COMMERCIAL"
+                                diffs.at[idx, "Action By"] = "Sr.DCM"
+                                diffs.at[idx, "Sub Head"] = ""
+
+                            
+                            if "Pertains to ELECT/G" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "ELECT/G"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DEE/G"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "ELECT/G"
+                                diffs.at[idx, "Action By"] = "Sr.DEE/G"
+                                diffs.at[idx, "Sub Head"] = ""
+                            if "Pertains to ELECT/TRD" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "ELECT/TRD"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DEE/TRD"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "ELECT/TRD"
+                                diffs.at[idx, "Action By"] = "Sr.DEE/TRD"
+                                diffs.at[idx, "Sub Head"] = ""
+                            # Existing feedback text
+                            existing_feedback = st.session_state.df.loc[idx, "Feedback"]
+        
+                            # Append with full stop separator if existing feedback is not empty
+                            if existing_feedback and existing_feedback.strip() != "":
+                                combined = existing_feedback.strip()
+                                if not combined.endswith("."):
+                                    combined += "."
+                                combined += " " + user_remark.strip()
+                            else:
+                                combined = user_remark.strip()
         
                             # Update in diffs
                             diffs.at[idx, "Feedback"] = combined
                             diffs.at[idx, "User Feedback/Remark"] = ""
         
-                            # Update in session state
+                            # Update in session state dataframe
                             st.session_state.df.loc[idx, "Feedback"] = combined
                             st.session_state.df.loc[idx, "User Feedback/Remark"] = ""
         
                         # Update Google Sheet
                         update_feedback_column(diffs)
         
-                        st.success(f"✅ Updated {len(diffs)} Feedback row(s) with replaced remarks.")
+                        st.success(f"✅ Updated {len(diffs)} Feedback row(s) with appended remarks.")
                     else:
                         st.info("ℹ️ No changes detected to save.")
                 else:
                     st.warning("⚠️ No rows matched for update.")
+
+st.markdown(
+    """
+    <marquee behavior="scroll" direction="left" style="color: red; font-weight: bold; font-size:16px;">
+        For any correction in data, contact Safety Department on sursafetyposition@gmail.com
+    </marquee>
+    """,
+    unsafe_allow_html=True
+)
+
+
+
+
+
+
+
 
 
