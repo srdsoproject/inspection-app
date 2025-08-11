@@ -148,7 +148,7 @@ def classify_feedback(feedback, user_remark=""):
             "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited", "briefed",
             "guided", "handover", "working properly", "checked found working", "supply restored", "noted please",
             "updated by", "adv to", "counselled the staff", "complied", "checked and found", "maintained",
-            "for needful action", "provided at", "in working condition", "is working", "found working", "informed",
+            "for needful action", "provided at", "in working condition", "is working", "found working", 
             "equipment is working", "item is working", "as per plan", "putright", "put right", "operational feasibility",
             "will be provided", "will be supplied shortly", "advised to ubl", 'Updated', 'updated'
         ]
@@ -853,6 +853,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
