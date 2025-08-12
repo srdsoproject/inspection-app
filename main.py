@@ -836,6 +836,24 @@ if not editable_filtered.empty:
                                 diffs.at[idx, "Head"] = "ELECT/TRD"
                                 diffs.at[idx, "Action By"] = "Sr.DEE/TRD"
                                 diffs.at[idx, "Sub Head"] = ""
+                            if "Pertains to ELECT/TRO" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "ELECT/TRO"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DEE/TRO"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "ELECT/TRO"
+                                diffs.at[idx, "Action By"] = "Sr.DEE/TRO"
+                                diffs.at[idx, "Sub Head"] = ""
+                            if "Pertains to Sr.DEN/S" in user_remark:
+                                st.session_state.df.at[idx, "Head"] = "ENGINEERING"
+                                st.session_state.df.at[idx, "Action By"] = "Sr.DEN/S"
+                                st.session_state.df.at[idx, "Sub Head"] = ""
+                                st.session_state.df.at[idx, "Feedback"] = ""
+        
+                                diffs.at[idx, "Head"] = "ENGINEERING"
+                                diffs.at[idx, "Action By"] = "Sr.DEN/S"
+                                diffs.at[idx, "Sub Head"] = ""
                             # Existing feedback text
                             existing_feedback = st.session_state.df.loc[idx, "Feedback"]
         
@@ -873,4 +891,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
