@@ -105,7 +105,7 @@ SUBHEAD_LIST = {
                          "STATION(VDU/BLOCK INSTRUMENT)", "MISC", "CCTV", "DISPLAY BOARDS"],
     "OPTG": [ "SWR/CSR/CSL/TWRD", "COMPETENCY RELATED", "STATION RECORDS", "STATION DEFICIENCIES",
              "SM OFFICE DEFICIENCIES", "MISC"],
-    "ENGINEERING": ["IOW WORKS","GSU", "ROUGH RIDING", "TRACK NEEDS ATTENTION", "MISC"],
+    "ENGINEERING": [ "IOW WORKS","GSU","ROUGH RIDING", "TRACK NEEDS ATTENTION", "MISC"],
     "COMMERCIAL": [ "TICKETING RELATED/MACHINE", "IRCTC", "MISC"],
     "C&W": [ "BRAKE BINDING", 'WHEEL DEFECT', 'TRAIN PARTING', 'PASSENGER AMENITIES', 'AIR PRESSURE LEAKAGE',
             'DAMAGED UNDER GEAR PARTS', 'MISC'],
@@ -135,27 +135,45 @@ def classify_feedback(feedback, user_remark=""):
 
     def classify_single(text):
         if not isinstance(text, str) or text.strip() == "":
-            return None  # Skip empty strings
+            return ""
+        return normalize(text)
 
-        text_normalized = normalize(text)
+    # NEW: Clear feedback trigger
+    if isinstance(feedback, str) and feedback.strip() == "`":
+        return ""  # This will leave the cell blank
 
-        # Detect dates like 26/07/2025, 26-07-25, 26.07.25
+    feedback_normalized = classify_single(feedback)
+    remark_normalized = classify_single(user_remark)
+
+    # Combine to preserve order
+    combined_text = f"{feedback_normalized} {remark_normalized}".strip()
+
+    # Step 1: Latest symbol override
+    last_marker_match = re.findall(r"[!#]", combined_text)
+    if last_marker_match:
+        last_marker = last_marker_match[-1]
+        if last_marker == "#":
+            return "Resolved"
+        elif last_marker == "!":
+            return "Pending"
+
+    def run_classification(text_normalized):
         date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', text_normalized))
 
         resolved_keywords = [
-            "attended", "solved", "submitted", "done", "completed", "informed", "confirmed by", "message given",
+            "attended", "solved", "submitted", "done", "completed",  "confirmed by", "message given",
             "tdc work completed", "replaced", "msg given", "msg sent", "counseled", "info shared", "communicated",
             "counselled", "gate will be closed soon", "attending at the time", "handled", "resolved", "action taken",
             "spoken to", "warned", "counselling", "hubli", "working normal", "met", "discussion held", "report sent",
             "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited", "briefed",
             "guided", "handover", "working properly", "checked found working", "supply restored", "noted please",
             "updated by", "adv to", "counselled the staff", "complied", "checked and found", "maintained",
-            "for needful action", "provided at", "in working condition", "is working", "found working", "informed",
+            "for needful action", "provided at", "in working condition", "is working", "found working",
             "equipment is working", "item is working", "as per plan", "putright", "put right", "operational feasibility",
-            "will be provided", "will be supplied shortly", "advised to ubl", "updated", '#'
+            "will be provided", "will be supplied shortly", "advised to ubl", "updated"
         ]
 
-        pending_keywords = [ '!',
+        pending_keywords = [
             "work is going on", "tdc given", "target date", "expected by", "likely by", "planned by",
             "will be", "needful", "to be", "pending", "not done", "awaiting", "waiting", "yet to", "next time",
             "follow up", "tdc.", "tdc", "t d c", "will attend", "will be attended", "scheduled", "reminder", "to inform",
@@ -165,43 +183,39 @@ def classify_feedback(feedback, user_remark=""):
             "to procure", "yet pending", "incomplete", "tentative", "ongoing", "in progress", "being done",
             "arranging", "waiting for", "subject to", "awaiting approval", "awaiting material", "awaiting confirmation",
             "next schedule", "planned for", "will arrange", "proposed date", "to complete", "to be completed",
-            "likely completion", "expected completion", "not received", "awaiting response",
-            r"\b\d{1,2}[.]\d{1,2}[.]\d{2,4}\b",
-            r"\b\d{1,2}[/]\d{1,2}[/]\d{2,4}\b",
-            r"\b\d{1,2}[-]\d{1,2}[-]\d{2,4}\b"
+            "likely completion", "expected completion", "not received", "awaiting response"
         ]
 
         # If TDC present and resolved keyword also present → Resolved
         if "tdc" in text_normalized and any(kw in text_normalized for kw in resolved_keywords):
             return "Resolved"
 
-        # Check pending first
         if any(kw in text_normalized for kw in pending_keywords):
             return "Pending"
 
-        # Date-only means resolved — but if 'tdc' present without resolved keyword, it's pending
         if date_found:
             if "tdc" in text_normalized:
                 return "Pending"
             return "Resolved"
 
-        # Then check resolved keywords
         if any(kw in text_normalized for kw in resolved_keywords):
             return "Resolved"
 
         return None
 
-    # Check both feedback and user_remark
-    feedback_result = classify_single(feedback)
-    user_remark_result = classify_single(user_remark) if user_remark and user_remark.strip() else None
+    # Step 2: Fallback to normal classification if no !/# found
+    feedback_result = run_classification(feedback_normalized)
+    remark_result = run_classification(remark_normalized)
 
-    # Final decision
-    if feedback_result == "Resolved" or user_remark_result == "Resolved":
+    if feedback_result == "Resolved" or remark_result == "Resolved":
         return "Resolved"
-    if feedback_result == "Pending" or user_remark_result == "Pending":
+    if feedback_result == "Pending" or remark_result == "Pending":
         return "Pending"
 
-    return "Pending"  # Default fallback
+    return "Pending"
+
+
+
 
 
 # ---------- LOAD DATA ----------
@@ -836,24 +850,6 @@ if not editable_filtered.empty:
                                 diffs.at[idx, "Head"] = "ELECT/TRD"
                                 diffs.at[idx, "Action By"] = "Sr.DEE/TRD"
                                 diffs.at[idx, "Sub Head"] = ""
-                            if "Pertains to ELECT/TRO" in user_remark:
-                                st.session_state.df.at[idx, "Head"] = "ELECT/TRO"
-                                st.session_state.df.at[idx, "Action By"] = "Sr.DEE/TRO"
-                                st.session_state.df.at[idx, "Sub Head"] = ""
-                                st.session_state.df.at[idx, "Feedback"] = ""
-        
-                                diffs.at[idx, "Head"] = "ELECT/TRO"
-                                diffs.at[idx, "Action By"] = "Sr.DEE/TRO"
-                                diffs.at[idx, "Sub Head"] = ""
-                            if "Pertains to Sr.DEN/S" in user_remark:
-                                st.session_state.df.at[idx, "Head"] = "ENGINEERING"
-                                st.session_state.df.at[idx, "Action By"] = "Sr.DEN/S"
-                                st.session_state.df.at[idx, "Sub Head"] = ""
-                                st.session_state.df.at[idx, "Feedback"] = ""
-        
-                                diffs.at[idx, "Head"] = "ENGINEERING"
-                                diffs.at[idx, "Action By"] = "Sr.DEN/S"
-                                diffs.at[idx, "Sub Head"] = ""
                             # Existing feedback text
                             existing_feedback = st.session_state.df.loc[idx, "Feedback"]
         
@@ -891,7 +887,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
-
