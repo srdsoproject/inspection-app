@@ -161,7 +161,7 @@ def classify_feedback(feedback, user_remark=""):
         date_found = bool(re.search(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', text_normalized))
 
         resolved_keywords = [
-            "attended", "solved", "submitted", "done", "completed",  "confirmed by", "message given",
+            "attended", "solved", "done", "completed",  "confirmed by", "message given",
             "tdc work completed", "replaced", "msg given", "msg sent", "counseled", "info shared", "communicated",
             "counselled", "gate will be closed soon", "attending at the time", "handled", "resolved", "action taken",
             "spoken to", "warned", "counselling", "hubli", "working normal", "met", "discussion held", "report sent",
@@ -887,3 +887,4 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
