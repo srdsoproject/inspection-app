@@ -26,7 +26,7 @@ if "user" not in st.session_state:
     st.session_state.user = {}
 
 if not st.session_state.logged_in:
-    st.title("🔐 Login to Safety Abnormality Report & Action List")
+    st.title("🔐 Login to S.A.R.A.L (Safety Abnormality Report & Action List)")
     with st.form("login_form", clear_on_submit=True):
         email = st.text_input("📧 Email")
         password = st.text_input("🔒 Password", type="password")
@@ -389,7 +389,7 @@ def apply_common_filters(df, prefix=""):
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
 # ---------- MAIN APP ----------
-st.title("📋 welcome to Safety Abnormality Report & Action List")
+st.title("📋 Welcome to S.A.R.A.L (Safety Abnormality Report & Action List)")
 tabs = st.tabs(["📊 View Records"])
 with tabs[0]:
 # ---------- GLOBAL CONSTANTS ----------
@@ -887,5 +887,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
