@@ -163,7 +163,7 @@ def classify_feedback(feedback, user_remark=""):
 
         resolved_keywords = [
             "attended", "solved", "done", "completed",  "confirmed by", "message given",
-            "tdc work completed", "replaced", "msg given", "msg sent", "counseled", "info shared", "communicated",
+            "tdc work completed", "replaced", "msg given", "msg sent", "counseled", "info shared", "communicated", "sent successfully",
             "counselled", "gate will be closed soon", "attending at the time", "handled", "resolved", "action taken",
             "spoken to", "warned", "counselling", "hubli", "working normal", "met", "discussion held", "report sent",
             "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited", "briefed",
@@ -888,6 +888,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
