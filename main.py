@@ -444,7 +444,11 @@ with tabs[0]:
     df["Status"] = df["Feedback"].apply(classify_feedback)
     
     # ---------- FILTERS ----------
-
+    start_date, end_date = st.date_input(
+        "📅 Select Date Range",
+        [df["Date of Inspection"].min(), df["Date of Inspection"].max()],
+        key="view_date_range"
+    )
     
     col1, col2 = st.columns(2)
     col1.multiselect("Type of Inspection", VALID_INSPECTIONS, key="view_type_filter")
@@ -884,9 +888,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
 
 
 
