@@ -217,8 +217,6 @@ def classify_feedback(feedback, user_remark=""):
 
 
 
-
-
 # ---------- LOAD DATA ----------
 @st.cache_data(ttl=0)
 def load_data():
@@ -390,10 +388,10 @@ def apply_common_filters(df, prefix=""):
 # -------------------- HELPER FUNCTIONS --------------------
 # All functions are defined here before they are called in the UI logic.
 # ---------- MAIN APP ----------
-st.title("📋 Welcome to S.A.R.A.L (Safety Abnormality Report & Action List)")
+st.title("📋 Welcome to S.A.R.A.L (Safety Abnormality Report & Action List) -version 1.1")
 tabs = st.tabs(["📊 View Records"])
 with tabs[0]:
-# ---------- GLOBAL CONSTANTS ----------
+    # ---------- GLOBAL CONSTANTS ----------
     VALID_INSPECTIONS = [
         "FOOTPLATE INSPECTION", "STATION INSPECTION", "LC GATE INSPECTION",
         "MISC", "COACHING DEPOT", "ON TRAIN", "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION"
@@ -444,11 +442,9 @@ with tabs[0]:
     df["Status"] = df["Feedback"].apply(classify_feedback)
     
     # ---------- FILTERS ----------
-    start_date, end_date = st.date_input(
-        "📅 Select Date Range",
-        [df["Date of Inspection"].min(), df["Date of Inspection"].max()],
-        key="view_date_range"
-    )
+    # Use full available date range automatically (no date picker)
+    start_date = df["Date of Inspection"].min()
+    end_date = df["Date of Inspection"].max()
     
     col1, col2 = st.columns(2)
     col1.multiselect("Type of Inspection", VALID_INSPECTIONS, key="view_type_filter")
@@ -463,8 +459,8 @@ with tabs[0]:
     
     # ---------- APPLY FILTERS ----------
     filtered = df[
-        (df["Date of Inspection"] >= pd.to_datetime(start_date)) &
-        (df["Date of Inspection"] <= pd.to_datetime(end_date))
+        (df["Date of Inspection"] >= start_date) &
+        (df["Date of Inspection"] <= end_date)
     ]
     
     if st.session_state.view_type_filter:
@@ -484,6 +480,7 @@ with tabs[0]:
 
     st.write(f"🔹 Showing {len(filtered)} record(s) from **{start_date.strftime('%d.%m.%Y')}** "
              f"to **{end_date.strftime('%d.%m.%Y')}**")
+    
     # Summary Counts Display
     pending_count = (filtered["Status"] == "Pending").sum()
     resolved_count = (filtered["Status"] == "Resolved").sum()
@@ -493,6 +490,7 @@ with tabs[0]:
     col_a.metric("🟨 Pending", pending_count)
     col_b.metric("🟩 Resolved", resolved_count)
     col_c.metric("📊 Total Records", total_count)
+
 
 
         # ---------- NEW SUB HEAD DISTRIBUTION CHART ----------
@@ -524,22 +522,7 @@ with tabs[0]:
         import matplotlib.pyplot as plt
         import numpy as np
         
-        # Filter and sort data
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import numpy as np
-        
-        # Data preparation
-        import matplotlib.pyplot as plt
-        import numpy as np
-        import pandas as pd
-        
-        # --- Sample DataFrame (replace this with your actual subhead_summary) ---
-        # subhead_summary = pd.DataFrame({
-        #     'Sub Head': ['A', 'B', 'C', 'D', 'E', 'F', 'Total'],
-        #     'Count': [50, 30, 10, 5, 3, 2, 100]
-        # })
-        
+       
         # --- Pie chart data preparation ---
         pie_data = subhead_summary[subhead_summary["Sub Head"] != "Total"].copy()
         pie_data = pie_data.sort_values("Count", ascending=False)
@@ -666,7 +649,6 @@ with tabs[0]:
             "Date of Inspection", "Type of Inspection", "Location", "Head", "Sub Head",
             "Deficiencies Noted", "Inspection By", "Action By", "Feedback", "User Feedback/Remark"
         ]].copy()
-        export_df["Date of Inspection"] = export_df["Date of Inspection"].dt.strftime('%d-%m-%Y')
         from io import BytesIO
         from openpyxl.styles import Alignment    
         towb = BytesIO()
@@ -693,6 +675,8 @@ with tabs[0]:
         )
         st.markdown("### 📄 Preview of Filtered Records")
 
+        
+            
 # Load once and keep in session
 # ---- Status calculation ----
 # ---- Status calculation ----
@@ -707,8 +691,53 @@ def color_text_status(status):
         return "🟢 Resolved"
     else:
         return status
+import io
+
 
 st.markdown("### ✍️ Edit User Feedback/Remarks in Table")
+
+# 🎨 Custom CSS for scrollbar
+st.markdown(
+    """
+    <style>
+    /* For WebKit browsers (Chrome, Edge, Safari) */
+    ::-webkit-scrollbar {
+        width: 16px;   /* vertical scrollbar width */
+        height: 16px;  /* horizontal scrollbar height */
+    }
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 8px;
+        border: 3px solid #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* For Firefox */
+    * {
+        scrollbar-width: auto;
+        scrollbar-color: #888 #f1f1f1;
+    }
+
+    /* 👇 Increase row height & enable wrapping ONLY for Deficiencies Noted & Feedback */
+    div[data-testid="stDataFrame"] div[role="cell"]:has(div:contains("Deficiencies Noted")),
+    div[data-testid="stDataFrame"] div[role="cell"]:has(div:contains("Feedback")) {
+        min-height: 70px !important;
+        height: auto !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.6 !important;
+        vertical-align: top !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 editable_filtered = filtered.copy()
 
@@ -722,6 +751,12 @@ if not editable_filtered.empty:
         "User Feedback/Remark"
     ]
     editable_df = editable_filtered[display_cols].copy()
+
+    # ✅ Fix: format "Date of Inspection" to only show date
+    if "Date of Inspection" in editable_df.columns:
+        editable_df["Date of Inspection"] = pd.to_datetime(
+            editable_df["Date of Inspection"], errors="coerce"
+        ).dt.date
 
     # Insert Status column next to User Feedback/Remark
     editable_df.insert(
@@ -751,6 +786,7 @@ if not editable_filtered.empty:
             use_container_width=True,
             hide_index=True,
             num_rows="fixed",
+            height=600,   # 👈 Fixed height so scrollbar is stable
             column_config={
                 "User Feedback/Remark": st.column_config.TextColumn("User Feedback/Remark"),
                 "Status": st.column_config.TextColumn(
@@ -765,7 +801,7 @@ if not editable_filtered.empty:
             key="feedback_editor"
         )
 
-        col1, col2 = st.columns([1, 1])
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             submitted = st.form_submit_button("✅ Submit Feedback")
         with col2:
@@ -773,6 +809,8 @@ if not editable_filtered.empty:
             if refresh_clicked:
                 st.session_state.df = load_data()
                 st.success("✅ Data refreshed successfully!")
+     
+                
 
         if submitted:
             # Make sure both edited_df and editable_filtered exist and have the expected column
@@ -880,6 +918,7 @@ if not editable_filtered.empty:
                 else:
                     st.warning("⚠️ No rows matched for update.")
 
+
 st.markdown(
     """
     <marquee behavior="scroll" direction="left" style="color: red; font-weight: bold; font-size:16px;">
@@ -888,6 +927,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
 
 
