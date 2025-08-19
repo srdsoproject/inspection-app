@@ -394,7 +394,7 @@ with tabs[0]:
     # ---------- GLOBAL CONSTANTS ----------
     VALID_INSPECTIONS = [
         "FOOTPLATE INSPECTION", "STATION INSPECTION", "LC GATE INSPECTION",
-        "MISC", "COACHING DEPOT", "ON TRAIN", "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION", "OTHER (UNUSUAL)
+        "MISC", "COACHING DEPOT", "ON TRAIN", "SURPRISE/AMBUSH INSPECTION", "WORKSITE INSPECTION", "OTHER (UNUSUAL)"
     ]
     
     station_list = [
@@ -927,6 +927,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
