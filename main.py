@@ -183,7 +183,7 @@ def classify_feedback(feedback, user_remark=""):
             "to inform", "to counsel", "to submit", "to do", "to replace", "prior", "remains", "still",
             "under process", "not yet", "to be done", "will ensure", "during next", "action will be taken",
             "will be supplied shortly", "not available", "not updated", "progress", "under progress",
-            "to arrange", "awaited", "material awaited", "approval awaited", "to procure", "yet pending",
+            "to arrange", "awaited", "material awaited", "approval awaited", "to procure", "yet pending", "Noted Please.",
             "incomplete", "tentative", "ongoing", "in progress", "being done", "arranging", "waiting for",
             "subject to", "awaiting approval", "awaiting material", "awaiting confirmation", "next schedule",
             "planned for", "will arrange", "proposed date", "to complete", "to be completed",
@@ -716,3 +716,4 @@ st.markdown("""
 - For Engineering North: Pertains to **Sr.DEN/C**
 - For Mechanical: **Pertains to MECHANICAL**
 """)
+
