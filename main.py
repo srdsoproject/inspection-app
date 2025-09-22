@@ -172,7 +172,7 @@ def classify_feedback(feedback, user_remark=""):
             "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited",
             "briefed", "guided", "handover", "working properly", "checked found working", "supply restored",
              "updated by", "adv to", "counselled the staff", "complied", "checked and found",
-            "maintained", "for needful action", "provided at", "in working condition", "is working",
+            "maintained", "for needful action", "provided at", "in working condition", "is working", "this is not a deficiency", "not deficiency", "it is observation", 
             "found working", "equipment is working", "item is working", "as per plan", "putright", "put right",
             "operational feasibility", "will be provided", "will be supplied shortly", "advised to ubl", "updated", "letter has been sent", "letter has been given"
         ]
@@ -717,6 +717,7 @@ st.markdown("""
 - For Engineering North: Pertains to **Sr.DEN/C**
 - For Mechanical: **Pertains to MECHANICAL**
 """)
+
 
 
 
