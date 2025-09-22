@@ -661,17 +661,19 @@ if not editable_filtered.empty:
 
                     # Auto routing by keywords
                     routing = {
-                        "Pertains to S&T":        ("SIGNAL & TELECOM", "Sr.DSTE"),
-                        "Pertains to OPTG":       ("OPTG", "Sr.DOM"),
-                        "Pertains to COMMERCIAL": ("COMMERCIAL", "Sr.DCM"),
-                        "Pertains to ELECT/G":    ("ELECT/G", "Sr.DEE/G"),
-                        "Pertains to ELECT/TRD":  ("ELECT/TRD", "Sr.DEE/TRD"),
-                        "Pertains to ELECT/TRO":  ("ELECT/TRO", "Sr.DEE/TRO"),
-                        "Pertains to Sr.DEN/S":   ("ENGINEERING", "Sr.DEN/S"),
-                        "Pertains to Sr.DEN/C":   ("ENGINEERING", "Sr.DEN/C"),
-                        "Pertains to Sr.DEN/Co":  ("ENGINEERING", "Sr.DEN/Co"),
-                        "Pertains to MECHANICAL":    ("MECHANICAL","Sr.DME"),
-                    }
+                    "Pertains to S&T":        ("SIGNAL & TELECOM", "Sr.DSTE"),
+                    "Pertains to OPTG":       ("OPTG", "Sr.DOM"),
+                    "Pertains to COMMERCIAL": ("COMMERCIAL", "Sr.DCM"),
+                    "Pertains to ELECT/G":    ("ELECT/G", "Sr.DEE/G"),
+                    "Pertains to ELECT/TRD":  ("ELECT/TRD", "Sr.DEE/TRD"),
+                    "Pertains to ELECT/TRO":  ("ELECT/TRO", "Sr.DEE/TRO"),
+                    "Pertains to Sr.DEN/S":   ("ENGINEERING", "Sr.DEN/S"),
+                    "Pertains to Sr.DEN/C":   ("ENGINEERING", "Sr.DEN/C"),
+                    "Pertains to Sr.DEN/Co":  ("ENGINEERING", "Sr.DEN/Co"),
+                    "Pertains to FINAINCE": ("FINANCE","Sr.DFM"),
+                    "Pertains to STORE" : ("STORE","Sr.DMM"),
+                    "Pertains to MEDICAL" : ("MEDICAL", "CMS"),
+                }
                     for key, (head, action_by) in routing.items():
                         if key in user_remark:
                             st.session_state.df.at[oid, "Head"] = head
@@ -707,6 +709,7 @@ st.markdown(
 )
 st.markdown("""
 **Use the following syntax or copy to forward attention to other department:**  
+
 - For Operating: Pertains to **OPTG**  
 - For Signal & Telecom: Pertains to **S&T** 
 - For Commercial: Pertains to **COMMERCIAL**
@@ -715,8 +718,12 @@ st.markdown("""
 - For ELECT/TRO: Pertains to **ELECT/TRO**
 - For Engineering South: Pertains to **Sr.DEN/S**
 - For Engineering North: Pertains to **Sr.DEN/C**
-- For Mechanical: **Pertains to MECHANICAL**
+- For Finance Department: Pertains to **FINAINCE**
+- For Store Department: Pertains to **STORE**
+- For Medical Department: Pertains to **MEDICAL**
+
 """)
+
 
 
 
