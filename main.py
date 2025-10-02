@@ -662,6 +662,7 @@ if not editable_filtered.empty:
                     # Auto routing by keywords
                     routing = {
                     "Pertains to S&T":        ("SIGNAL & TELECOM", "Sr.DSTE"),
+                    "Pertains to SECURITY": ("SECURITY","DSC"),
                     "Pertains to OPTG":       ("OPTG", "Sr.DOM"),
                     "Pertains to COMMERCIAL": ("COMMERCIAL", "Sr.DCM"),
                     "Pertains to ELECT/G":    ("ELECT/G", "Sr.DEE/G"),
@@ -723,8 +724,9 @@ st.markdown("""
 - For Finance Department: Pertains to **FINAINCE**
 - For Store Department: Pertains to **STORE**
 - For Medical Department: Pertains to **MEDICAL**
-
+- For Security Department: Pertains to **SECURITY**
 """)
+
 
 
 
