@@ -667,7 +667,7 @@ if not editable_filtered.empty:
                     "Pertains to COMMERCIAL": ("COMMERCIAL", "Sr.DCM"),
                     "Pertains to ELECT/G":    ("ELECT/G", "Sr.DEE/G"),
                     "Pertains to ELECT/TRD":  ("ELECT/TRD", "Sr.DEE/TRD"),
-                    "Pertains to MECHANICAL":  ("ELECT/TRD", "Sr.DME"),
+                    "Pertains to MECHANICAL":  ("MECHANICAL", "Sr.DME"),
                     "Pertains to ELECT/TRO":  ("ELECT/TRO", "Sr.DEE/TRO"),
                     "Pertains to Sr.DEN/S":   ("ENGINEERING", "Sr.DEN/S"),
                     "Pertains to Sr.DEN/C":   ("ENGINEERING", "Sr.DEN/C"),
@@ -726,6 +726,7 @@ st.markdown("""
 - For Medical Department: Pertains to **MEDICAL**
 - For Security Department: Pertains to **SECURITY**
 """)
+
 
 
 
