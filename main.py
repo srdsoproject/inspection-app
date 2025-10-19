@@ -101,10 +101,7 @@ try:
         st.write("No responses submitted yet.")
 except FileNotFoundError:
     st.write("No responses submitted yet.")
-if st.button("🗑️ Clear All Responses", key="clear_responses_btn"):
-    df = pd.DataFrame(columns=["Name"])
-    df.to_excel("responses.xlsx", index=False)
-    st.success("✅ All responses have been cleared.")
+
 # ---------- GOOGLE SHEETS CONNECTION ----------
 import pandas as pd
 import gspread
@@ -1077,6 +1074,7 @@ with tabs[1]:
             st.altair_chart(loc_chart, use_container_width=True)
         else:
             st.info("No pending deficiencies for selected locations.")
+
 
 
 
