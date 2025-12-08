@@ -208,7 +208,7 @@ def classify_feedback(feedback, user_remark=""):
             "attending at the time", "handled", "resolved", "action taken", "spoken to", "warned",
             "counselling", "hubli", "working normal", "met", "discussion held", "report sent",
             "notified", "explained", "nil", "na", "tlc", "work completed", "acknowledged", "visited",
-            "briefed", "guided", "handover", "working properly", "checked found working", "supply restored",
+            "briefed", "guided", "handover", "working properly", "checked found working", "supply restored", "This is not a deficiency.", "This is not a deficiency", "not a deficiency", "this is observation", "It is observation",
             "updated by", "adv to", "counselled the staff", "complied", "checked and found",
             "maintained", "for needful action", "provided at", "in working condition", "is working",
             "found working", "equipment is working", "item is working", "as per plan", "putright", "put right", 'attend dt','attend dt.', 
@@ -1283,6 +1283,7 @@ with tabs[1]:
                 )
         else:
             st.info("Please select at least one location to view the breakdown.")
+
 
 
 
