@@ -852,6 +852,8 @@ with tabs[0]:
                         "Pertains to FINAINCE": ("FINANCE", "Sr.DFM"),
                         "Pertains to STORE": ("STORE", "Sr.DMM"),
                         "Pertains to MEDICAL": ("MEDICAL", "CMS"),
+                        "Pertains to Sr.DPO" : ("PERSONNEL", "Sr.DPO"),
+                        "Pertains to C&W" : ("MECHANICAL", "Sr.DME"),
                         
                     }
                     for oid in changed_ids:
@@ -935,6 +937,7 @@ st.markdown("""
 - For Store Department: Pertains to **STORE**
 - For Medical Department: Pertains to **MEDICAL**
 - For Security Department: Pertains to **SECURITY**
+- For Personnel Department: Pertains to **Sr.DPO**
 """)
 st.markdown("""
 <div style="text-align: center; margin: 35px 0;">
@@ -1283,6 +1286,7 @@ with tabs[1]:
                 )
         else:
             st.info("Please select at least one location to view the breakdown.")
+
 
 
 
