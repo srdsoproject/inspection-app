@@ -1056,22 +1056,7 @@ with tabs[0]:
 
                                 # Updated routing dictionary with fixed typo
                                 routing = {
-                                    "Pertains to S&T": ("SIGNAL & TELECOM", "Sr.DSTE"),
-                                    "Pertains to SECURITY": ("SECURITY", "DSC"),
-                                    "Pertains to OPTG": ("OPTG", "Sr.DOM"),
-                                    "Pertains to COMMERCIAL": ("COMMERCIAL", "Sr.DCM"),
-                                    "Pertains to ELECT/G": ("ELECT/G", "Sr.DEE/G"),
-                                    "Pertains to ELECT/TRD": ("ELECT/TRD", "Sr.DEE/TRD"),
-                                    "Pertaining to TRD dept": ("ELECT/TRD", "Sr.DEE/TRD"),
-                                    "Pertains to MECHANICAL": ("MECHANICAL", "Sr.DME"),
-                                    "Pertains to ELECT/TRO": ("ELECT/TRO", "Sr.DEE/TRO"),
-                                    "Pertains to Sr.DEN/S": ("ENGINEERING", "Sr.DEN/S"),
-                                    "Pertains to Sr. DEN(South)": ("ENGINEERING", "Sr.DEN/S"),
-                                    "Pertains to Sr.DEN/C": ("ENGINEERING", "Sr.DEN/C"),
-                                    "Pertains to Sr.DEN/Co": ("ENGINEERING", "Sr.DEN/Co"),
-                                    "Pertains to FINANCE": ("FINANCE", "Sr.DFM"),        # ← FIXED: was "FINAINCE"
-                                    "Pertains to STORE": ("STORE", "Sr.DMM"),
-                                    "Pertains to MEDICAL": ("MEDICAL", "CMS"),
+                                    "Pertains to abc": ("", ""),
                                 }
 
                                 for oid in changed_ids:
@@ -1155,22 +1140,6 @@ else:
     st.info("✅ No pending alerts.")
 
 # -------------------- FOOTER --------------------
-st.markdown("""
-**Use the following syntax or copy to forward attention to other department:**
-- For Operating: Pertains to **OPTG**
-- For Signal & Telecom: Pertains to **S&T**
-- For Commercial: Pertains to **COMMERCIAL**
-- For ELECT/G: Pertains to **ELECT/G**
-- For MECHANICAL: Pertains to **MECHANICAL**
-- For ELECT/TRD: Pertains to **ELECT/TRD**
-- For ELECT/TRO: Pertains to **ELECT/TRO**
-- For Engineering South: Pertains to **Sr.DEN/S**
-- For Engineering North: Pertains to **Sr.DEN/C**
-- For Finance Department: Pertains to **FINANCE**
-- For Store Department: Pertains to **STORE**
-- For Medical Department: Pertains to **MEDICAL**
-- For Security Department: Pertains to **SECURITY**
-""")
 st.markdown("""
 <div style="text-align: center; margin: 35px 0;">
   <div class="adaptive-credit">
@@ -1518,4 +1487,5 @@ with tabs[1]:
                 )
         else:
             st.info("Please select at least one location to view the breakdown.")
+
 
