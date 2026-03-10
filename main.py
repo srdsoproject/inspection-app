@@ -974,20 +974,7 @@ with tabs[0]:
 
                                 # Updated routing dictionary with fixed typo
                                 routing = {
-                                    "Pertains to Sr.DSTE": ("SIGNAL & TELECOM", "Sr.DSTE"),
-                                    "Pertains to DSC": ("SECURITY", "DSC"),
-                                    "Pertains to Sr.DOM": ("OPTG", "Sr.DOM"),
-                                    "Pertains to Sr.DCM": ("COMMERCIAL", "Sr.DCM"),
-                                    "Pertains to Sr.DEE/G": ("ELECT/G", "Sr.DEE/G"),
-                                    "Pertains to Sr.DEE/TRD": ("ELECT/TRD", "Sr.DEE/TRD"),
-                                    "Pertains to Sr.DME": ("MECHANICAL", "Sr.DME"),
-                                    "Pertains to Sr.DEE/TRO": ("ELECT/TRO", "Sr.DEE/TRO"),
-                                    "Pertains to ENGG/S": ("ENGINEERING", "Sr.DEN/S"),
-                                    "Pertains to ENGG/C": ("ENGINEERING", "Sr.DEN/C"),
-                                    "Pertains to ENGG/Co": ("ENGINEERING", "Sr.DEN/Co"),
-                                    "Pertains to Sr.DFM": ("FINANCE", "Sr.DFM"),        # ← FIXED: was "FINAINCE"
-                                    "Pertains to Sr.DFM": ("STORE", "Sr.DMM"),
-                                    "Pertains to CMS": ("MEDICAL", "CMS"),
+                                    "Pertains to 0": ("0", "0"),
                                 }
 
                                 for oid in changed_ids:
@@ -1381,3 +1368,4 @@ with tabs[1]:
                 )
         else:
             st.info("Please select at least one location to view the breakdown.")
+
