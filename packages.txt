@@ -1,3 +1,6 @@
-libatlas-base-dev
 libopenblas-dev
-libgfortran5
+liblapack-dev
+gfortran
+python3-dev
+build-essential
+pkg-config
