@@ -141,12 +141,10 @@ STATION_LIST = list(dict.fromkeys([
 ]))
 
 GATE_LIST = list(dict.fromkeys([
-    'LC-19', 'LC-22A', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37', 'LC-40', 'LC-41',
-    'LC-43', 'LC-44', 'LC-45', 'LC-46C', 'LC-54', 'LC-61', 'LC-66', 'LC-74', 'LC-76', 'LC-78', 'LC-82', 'LC-1',
-    'LC-60A', 'LC-1', 'LC-1 ACC', 'LC-2 ACC', 'LC-91', 'LC-22', 'LC-24', 'LC-32', 'LC-49', 'LC-70',
-    'LC-10', 'LC-34', 'LC-36', 'LC-47', 'LC-55', 'LC-59', 'LC-2', 'LC-4', 'LC-42', 'LC-02', 'LC-128', 'LC-63',
-    'LC-04', 'LC-67', 'LC-77', 'LC-75', 'LC-64', 'LC-65', 'LC-5', 'LC-6', 'LC-57', 'LC-62', 'LC-39', 'LC-2/C',
-    'LC-6/C', 'LC-11', 'LC-03', 'LC-15/C', 'LC-21', 'LC-26-A', 'LC-60'
+    'LC-19', 'LC-22', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37', 'LC-40', 'LC-41',
+    'LC-61', 'LC-66', 'LC-82', 'LC-1', 'LC-60',  'LC-91', 'LC-22', 'LC-24', 'LC-49', 'LC-70', 'LC-10', 'LC-34', 'LC-36', 'LC-47', 'LC-55', 'LC-59', 'LC-2', 'LC-4', 'LC-42', 'LC-2',
+    'LC-04', 'LC-67', 'LC-77', 'LC-75', 'LC-64', 'LC-65', 'LC-5', 'LC-57', 'LC-62', 'LC-39', 
+    'LC-6', 'LC-3', 'LC-21'
 ]))
 
 FOOTPLATE_ROUTE_HIERARCHY = {
@@ -156,8 +154,8 @@ FOOTPLATE_ROUTE_HIERARCHY = {
     "KWV-MRJ": ["KWV-PVR", 'DLGN-KVK', 'DLGN-PVR', 'PVR-MRJ', 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN','JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'],
     "DD-SUR": ["JEUR-KWV", "BGVN-JNTR", 'BGVN-JNTR', 'DD-KWV', 'KWV-SUR', 'SUR', 'BALE', 'PK', 'MVE', 'MO', 'MKPT','WKA', 'ANG', 'MA', 'WDS', 'KWV', 'KEM', 'DHS', 'BLNI', 'JEUR', 'PPJ', 'WSB', 'KEU', 'JNTR', 'BGVN', 'MLM', 'BRB', 'DD'],
     "WADI-SUR": ["WADI-KLBG", "KLBG-SUR", "DUD-HG", 'BOT-NGS', 'WADI-SDB', 'SUR','TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'GUR', 'GDGN', 'KUI', 'DUD', 'HDD', 'SVG', 'BBD', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI'],
-    "KWV-LUR": ["KWV-BTW", 'DRSV-LUR', 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR' ],
-    "MRJ-KWV": ["PVR-KWV", "SGLA-PVR", 'SGRE-KVK', 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN','JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'],
+    "KWV-LUR": ["KWV-BTW", 'DRSV-LUR', 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR', 'LC-10', 'LC-34', 'LC-36', 'LC-39', 'LC-47', 'LC-55', 'LC-59'],
+    "MRJ-KWV": ["PVR-KWV", "SGLA-PVR", 'SGRE-KVK', 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN','JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB', 'LC-22', 'LC-24', 'LC-31', 'LC-49', 'LC-70'],
 }
 
 FOOTPLATE_ROUTES = list(FOOTPLATE_ROUTE_HIERARCHY.keys())
@@ -169,7 +167,7 @@ HEAD_LIST = ["", "ELECT/TRD", "ELECT/G", "ELECT/TRO", "SIGNAL & TELECOM", "OPTG"
 
 SUBHEAD_LIST = {
     "ELECT/TRD": ["T/W WAGON", "TSS/SP/SSP", "OHE SECTION", "OHE STATION", "MISC"],
-    "ELECT/G": ["TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC"],
+    "ELECT/G": ["TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC", 'LIGHT/ILLUMINATION'],
     "ELECT/TRO": ["LOCO DEFECTS", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE", "PR RELATED",
                   "CMS", "FSD","MISC"],
     "MECHANICAL": ['C&W RELATED', "DEMU RELATED", "VANDE BHARAT RELATED", "MISC", 'MECHANICAL RELATED', 'HABD'],
@@ -1197,7 +1195,6 @@ with tabs[1]:
             "SIGNAL & TELECOM": "SIGNAL & TELECOM",
             "MECHANICAL": "MECHANICAL",
             "COMMERCIAL": "COMMERCIAL",
-            "C&W": "C&W", 
             "SECURITY": "SECURITY",
             "PERSONNEL": "PERSONNEL",
             "MEDICAL": "MEDICAL",
