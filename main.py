@@ -176,7 +176,7 @@ SUBHEAD_LIST = {
              "SM OFFICE DEFICIENCIES/ASSETS", "MISC"],
     "ENGINEERING": ["IOW WORKS (Other)", "IOW WORKS (Safety Related)", "PWI (Track Related)", 'LC GATE DEFICIENCIES', 'P&C', 'WORKSITE'],
     "COMMERCIAL": ["REQUIREMENT/ASSETS", "CLEANLINESS/COAL BAGS", "PASSENGER AMENITIES", "STAFF (RAILWAY/CONTRACT)", "MISC"],
-    "FINANCE": ["MISC"], "MEDICAL": ["MISC"], "STORE": ["MISC"],
+    "FINANCE": ["MISC"], "MEDICAL": ["MISC"], "STORE": ["MISC"], "GSU": ["IOW WORKS (Other)", "IOW WORKS (Safety Related)"]
 }
 
 INSPECTION_BY_LIST = [""] + ["HQ OFFICER CCE/CR", 'DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
@@ -187,7 +187,7 @@ INSPECTION_BY_LIST = [""] + ["HQ OFFICER CCE/CR", 'DRM/SUR', 'ADRM', 'Sr.DSO', '
                              'ADFM/I', 'ADFMII', 'ASC', 'ADSO/SUR', "ADME/WADI", 'DEN/TRACK']
 
 ACTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
-                         'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC', 'CMS', 'ADEN/TM/SUR', 'DEN/TRACK', 'GSU']
+                         'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC', 'CMS', 'ADEN/TM/SUR', 'DEN/TRACK', 'ADEN/GSU']
 
 VALID_INSPECTIONS = [
     "FOOTPLATE INSPECTION", "STATION INSPECTION", "LC GATE INSPECTION",
