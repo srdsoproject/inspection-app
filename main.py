@@ -170,7 +170,7 @@ SUBHEAD_LIST = {
     "ELECT/G": ["TL/AC COACH", "POWER/PANTRY CAR", "WIRING/EQUIPMENT", "UPS", "AC", "DG", "SOLAR LIGHT", "MISC", 'LIGHT/ILLUMINATION'],
     "ELECT/TRO": ["LOCO DEFECTS", "RUNNING ROOM DEFICIENCIES", "LOBBY DEFICIENCIES", "LRD RELATED", "PERSONAL STORE", "PR RELATED",
                   "CMS", "FSD","MISC"],
-    "MECHANICAL": ['ART/ARME', "CCTV related", "Coaching related (Other)", "MISC", 'Coaching related (Primary)', 'Depot infrastructure (KLBG)', 'Depot infrastructure (KWV)', 'Depot infrastructure (LUR)', 'Depot infrastructure (SUR)', 'Depot infrastructure (WADI', 'HABD related', 'Staff working', 'Wagon related (SUR DIVN examined)', 'Wagon related (Other)'],
+    "MECHANICAL": ['ART/ARME', "CCTV related", "Coaching related (Other)", "MISC", 'Coaching related (Primary)', 'Depot infrastructure (KLBG)', 'Depot infrastructure (KWV)', 'Depot infrastructure (LUR)', 'Depot infrastructure (SUR)', 'Depot infrastructure (WADI', 'HABD related', 'Staff working', 'Wagon related (SUR DIV examined)', 'Wagon related (Other)'],
     "SIGNAL & TELECOM": ["ART/ARME", 'CABLES/EARTHING/KAVACH', 'FIRE ALARM/EXTINGUISHER', 'JOINT INSPECTION (P&C/TC/TRD)', 'LC GATE DEFICIENCIES', 'PANEL/VDU/BI/BPAC/DOCUMENTS', 'PASSENGER AMENITIES/CCTV', 'RELAY ROOM/DL', 'SIGNAL/BOARDS/VEGETATION', 'TRACK CIRCUIT/POINTS', 'WALKIE-TALKIE/COMMUNICATION', 'MISC'],
     "OPTG": ["SWR/CSR/CSL/TWRD", "STATION RECORDS", "STATION DEFICIENCIES", "TRAIN O/P RELATED", "LC GATE DEFICIENCIES", "CIRCULAR/KNOWLEDGE/STAFF", "SIGNAL EXCHANGE", 'WALKIE-TALKIE/PHONE',
              "SM OFFICE DEFICIENCIES/ASSETS", "MISC"],
