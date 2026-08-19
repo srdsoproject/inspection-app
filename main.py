@@ -439,7 +439,7 @@ if not st.session_state.logged_in:
         st.stop()
 
     with st.form("login_form", clear_on_submit=False):
-        email = st.text_input("📧 Email", placeholder="your.email@example.com")
+        email = st.text_input("📧 Email", placeholder="User Id")
         password = st.text_input("🔒 Password", type="password")
 
         st.markdown("**🤖 Human check:**")
