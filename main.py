@@ -1224,7 +1224,7 @@ if st.session_state.df is None:
 # =========================================================================
 # MAIN TABS
 # =========================================================================
-tabs = st.tabs(["📝 View Records", "📊 Analytics", "📨 Inspections", " 💡Smart Analysis"])
+tabs = st.tabs(["📝 View Records", "📊 Analytics", "📨 Inspections"])
 
 with tabs[0]:
     df = st.session_state.df
