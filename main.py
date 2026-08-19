@@ -39,8 +39,9 @@ st.set_page_config(
 TIMESTAMP_COL_NAME = "Timestamp of Compliance"
 
 # ---- "Inspections" sheet config (used by the WhatsApp report generator tab) ----
-INSPECTIONS_SHEET_ID = "1WtNy5EYMFEFI0gWcipqFse_aaBT6fwB3erVDYLVNAGY"
-INSPECTIONS_SHEET_NAME = "Inspections"
+_gs_secrets = st.secrets.get("google_sheets", {})
+INSPECTIONS_SHEET_ID = _gs_secrets.get("ins_sheet_id")
+INSPECTIONS_SHEET_NAME = _gs_secrets.get("ins_sheet_name")
 # Field name -> 0-indexed column position (A=0, B=1, C=2, ...) as specified.
 INSPECTIONS_COL_MAP = {
     "Name": 1,           # Column B - Inspecting Official's name
