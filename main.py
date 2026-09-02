@@ -537,9 +537,9 @@ try:
 except FileNotFoundError:
     st.info("No responses submitted yet.")
 
-if st.button("🗑️ Clear All Responses", key="clear_responses_btn", use_container_width=True):
+'''if st.button("🗑️ Clear All Responses", key="clear_responses_btn", use_container_width=True):
     pd.DataFrame(columns=["UserID", "Name"]).to_excel("responses.xlsx", index=False)
-    st.success("✅ All responses have been cleared.")
+    st.success("✅ All responses have been cleared.")'''
 
 # =========================================================================
 # GOOGLE SHEETS CONNECTION
@@ -1445,7 +1445,7 @@ with tabs[0]:
             wrapText=True,
             autoHeight=True,
             resizable=True,
-            suppressMovable=True,  # helps on touch devices
+            suppressMovable=False,  # helps on touch devices
         )
         if "User Feedback/Remark" in grid_display_df.columns:
             gb.configure_column(
