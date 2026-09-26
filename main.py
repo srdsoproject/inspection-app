@@ -1,4 +1,15 @@
 #inspectionviewer
+from __future__ import annotations
+import io
+import os
+import tempfile
+from datetime import date, datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
+import streamlit as st
+
 import streamlit as st
 import pandas as pd
 import gspread
@@ -12,20 +23,37 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from openpyxl.styles import Alignment, Font, Border, Side, NamedStyle
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
-import pandas.api.types as ptypes
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from st_aggrid.shared import JsCode
 import pytz
 from datetime import datetime, date, timedelta
 from urllib.parse import quote
 import re
-from datetime import date, datetime
 import plotly.express as px
 import plotly.graph_objects as go
-# ... any other imports you already have
+
+
+import io
+import os
+import re
+import sys
+import tempfile
+from datetime import date, datetime
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, Rectangle, Circle
+from PIL import Image
+import streamlit as st
+import requests
 # =========================================================================
 # CONFIG
 # =========================================================================
+import railway_safety_unified as rs
+
 st.set_page_config(
     page_title="S.A.R.A.L Inspection App",
     layout="wide",
@@ -440,10 +468,10 @@ if not st.session_state.logged_in:
         st.stop()
 
     with st.form("login_form", clear_on_submit=False):
-        email = st.text_input("📧 Email", placeholder="User Id")
+        email = st.text_input("📧 Email", placeholder="Enter Id")
         password = st.text_input("🔒 Password", type="password")
 
-        st.markdown("**🤖 Human check:**")
+        st.markdown("**✅ Human check:**")
         st.image(
             generate_captcha_image(st.session_state.captcha_text),
             caption="Type the characters shown above (not case-sensitive)",
@@ -536,7 +564,6 @@ try:
         st.info("No responses submitted yet.")
 except FileNotFoundError:
     st.info("No responses submitted yet.")
-
 
 # =========================================================================
 # GOOGLE SHEETS CONNECTION
@@ -675,21 +702,189 @@ STATION_LIST = list(dict.fromkeys([
 GATE_LIST = list(dict.fromkeys([
     'LC-19', 'LC-22A', 'LC-25', 'LC-26', 'LC-27C', 'LC-28', 'LC-30', 'LC-31', 'LC-35', 'LC-37', 'LC-40', 'LC-41',
     'LC-43', 'LC-44', 'LC-45', 'LC-46C', 'LC-54', 'LC-61', 'LC-66', 'LC-74', 'LC-76', 'LC-78', 'LC-82', 'LC-1',
-    'LC-60A', 'LC-1', 'LC-1 ACC', 'LC-2 ACC', 'LC-91', 'LC-22', 'LC-24', 'LC-32', 'LC-49', 'LC-70',
+    'LC-60A', 'LC-1 ACC', 'LC-2 ACC', 'LC-91', 'LC-22', 'LC-24', 'LC-32', 'LC-49', 'LC-70',
     'LC-10', 'LC-34', 'LC-36', 'LC-47', 'LC-55', 'LC-59', 'LC-2', 'LC-4', 'LC-42', 'LC-02', 'LC-128', 'LC-63',
     'LC-04', 'LC-67', 'LC-77', 'LC-75', 'LC-64', 'LC-65', 'LC-5', 'LC-6', 'LC-57', 'LC-62', 'LC-39', 'LC-2/C',
     'LC-6/C', 'LC-11', 'LC-03', 'LC-15/C', 'LC-21', 'LC-26-A', 'LC-60'
 ]))
 
 FOOTPLATE_ROUTE_HIERARCHY = {
-    "SUR-DD": ["SUR-KWV", "KWV-DD", "BRB-DD", 'PPJ-WSB', 'SUR-BGVN', 'SUR-MA', 'SUR-PUNE', 'SUR', 'BALE', 'PK', 'MVE', 'MO', 'MKPT', 'WKA', 'ANG', 'MA', 'WDS', 'KWV', 'KEM', 'DHS', 'BLNI', 'JEUR', 'PPJ', 'WSB', 'KEU', 'JNTR', 'BGVN', 'MLM', 'BRB', 'DD', 'LC-40', 'LC-42', 'LC-21', 'LC-19'],
-    "SUR-WADI": ["SUR-KLBG", "SDB-WADI", "KLBG-WADI", "BOT-DUD", "DUD-WADI", "SUR-TKWD", 'BBD-KLBG', 'SUR-DUD', 'SUR-SDB', 'SUR', 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'GUR', 'GDGN', 'KUI', 'DUD', 'HDD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'LC-1', 'LC-60', 'LC-61', 'LC-66', 'LC-74', 'LC-82', 'LC-91'],
-    "LUR-KWV": ["BTW-KWV", "DRSV-KWV", 'SEI-KWV', 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR'],
-    "KWV-MRJ": ["KWV-PVR", 'DLGN-KVK', 'DLGN-PVR', 'PVR-MRJ', 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'],
-    "DD-SUR": ["JEUR-KWV", "BGVN-JNTR", 'BGVN-JNTR', 'DD-KWV', 'KWV-SUR', 'SUR', 'BALE', 'PK', 'MVE', 'MO', 'MKPT', 'WKA', 'ANG', 'MA', 'WDS', 'KWV', 'KEM', 'DHS', 'BLNI', 'JEUR', 'PPJ', 'WSB', 'KEU', 'JNTR', 'BGVN', 'MLM', 'BRB', 'DD'],
-    "WADI-SUR": ["WADI-KLBG", "KLBG-SUR", "DUD-HG", 'BOT-NGS', 'WADI-SDB', 'SUR', 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'GUR', 'GDGN', 'KUI', 'DUD', 'HDD', 'SVG', 'BBD', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI'],
-    "KWV-LUR": ["KWV-BTW", 'DRSV-LUR', 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR'],
-    "MRJ-KWV": ["PVR-KWV", "SGLA-PVR", 'SGRE-KVK', 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'],
+    "SUR-DD": [
+        "SUR-BALE", "SUR-PK", "SUR-MVE", "SUR-MO", "SUR-MKPT", "SUR-WKA", "SUR-ANG", "SUR-MA",
+        "SUR-WDS", "SUR-KWV", "SUR-KEM", "SUR-DHS", "SUR-BLNI", "SUR-JEUR", "SUR-PPJ", "SUR-WSB",
+        "SUR-KEU", "SUR-JNTR", "SUR-BGVN", "SUR-MLM", "SUR-BRB", "SUR-DD", "BALE-PK", "BALE-MVE",
+        "BALE-MO", "BALE-MKPT", "BALE-WKA", "BALE-ANG", "BALE-MA", "BALE-WDS", "BALE-KWV", "BALE-KEM",
+        "BALE-DHS", "BALE-BLNI", "BALE-JEUR", "BALE-PPJ", "BALE-WSB", "BALE-KEU", "BALE-JNTR", "BALE-BGVN",
+        "BALE-MLM", "BALE-BRB", "BALE-DD", "PK-MVE", "PK-MO", "PK-MKPT", "PK-WKA", "PK-ANG",
+        "PK-MA", "PK-WDS", "PK-KWV", "PK-KEM", "PK-DHS", "PK-BLNI", "PK-JEUR", "PK-PPJ",
+        "PK-WSB", "PK-KEU", "PK-JNTR", "PK-BGVN", "PK-MLM", "PK-BRB", "PK-DD", "MVE-MO",
+        "MVE-MKPT", "MVE-WKA", "MVE-ANG", "MVE-MA", "MVE-WDS", "MVE-KWV", "MVE-KEM", "MVE-DHS",
+        "MVE-BLNI", "MVE-JEUR", "MVE-PPJ", "MVE-WSB", "MVE-KEU", "MVE-JNTR", "MVE-BGVN", "MVE-MLM",
+        "MVE-BRB", "MVE-DD", "MO-MKPT", "MO-WKA", "MO-ANG", "MO-MA", "MO-WDS", "MO-KWV",
+        "MO-KEM", "MO-DHS", "MO-BLNI", "MO-JEUR", "MO-PPJ", "MO-WSB", "MO-KEU", "MO-JNTR",
+        "MO-BGVN", "MO-MLM", "MO-BRB", "MO-DD", "MKPT-WKA", "MKPT-ANG", "MKPT-MA", "MKPT-WDS",
+        "MKPT-KWV", "MKPT-KEM", "MKPT-DHS", "MKPT-BLNI", "MKPT-JEUR", "MKPT-PPJ", "MKPT-WSB", "MKPT-KEU",
+        "MKPT-JNTR", "MKPT-BGVN", "MKPT-MLM", "MKPT-BRB", "MKPT-DD", "WKA-ANG", "WKA-MA", "WKA-WDS",
+        "WKA-KWV", "WKA-KEM", "WKA-DHS", "WKA-BLNI", "WKA-JEUR", "WKA-PPJ", "WKA-WSB", "WKA-KEU",
+        "WKA-JNTR", "WKA-BGVN", "WKA-MLM", "WKA-BRB", "WKA-DD", "ANG-MA", "ANG-WDS", "ANG-KWV",
+        "ANG-KEM", "ANG-DHS", "ANG-BLNI", "ANG-JEUR", "ANG-PPJ", "ANG-WSB", "ANG-KEU", "ANG-JNTR",
+        "ANG-BGVN", "ANG-MLM", "ANG-BRB", "ANG-DD", "MA-WDS", "MA-KWV", "MA-KEM", "MA-DHS",
+        "MA-BLNI", "MA-JEUR", "MA-PPJ", "MA-WSB", "MA-KEU", "MA-JNTR", "MA-BGVN", "MA-MLM",
+        "MA-BRB", "MA-DD", "WDS-KWV", "WDS-KEM", "WDS-DHS", "WDS-BLNI", "WDS-JEUR", "WDS-PPJ",
+        "WDS-WSB", "WDS-KEU", "WDS-JNTR", "WDS-BGVN", "WDS-MLM", "WDS-BRB", "WDS-DD", "KWV-KEM",
+        "KWV-DHS", "KWV-BLNI", "KWV-JEUR", "KWV-PPJ", "KWV-WSB", "KWV-KEU", "KWV-JNTR", "KWV-BGVN",
+        "KWV-MLM", "KWV-BRB", "KWV-DD", "KEM-DHS", "KEM-BLNI", "KEM-JEUR", "KEM-PPJ", "KEM-WSB",
+        "KEM-KEU", "KEM-JNTR", "KEM-BGVN", "KEM-MLM", "KEM-BRB", "KEM-DD", "DHS-BLNI", "DHS-JEUR",
+        "DHS-PPJ", "DHS-WSB", "DHS-KEU", "DHS-JNTR", "DHS-BGVN", "DHS-MLM", "DHS-BRB", "DHS-DD",
+        "BLNI-JEUR", "BLNI-PPJ", "BLNI-WSB", "BLNI-KEU", "BLNI-JNTR", "BLNI-BGVN", "BLNI-MLM", "BLNI-BRB",
+        "BLNI-DD", "JEUR-PPJ", "JEUR-WSB", "JEUR-KEU", "JEUR-JNTR", "JEUR-BGVN", "JEUR-MLM", "JEUR-BRB",
+        "JEUR-DD", "PPJ-WSB", "PPJ-KEU", "PPJ-JNTR", "PPJ-BGVN", "PPJ-MLM", "PPJ-BRB", "PPJ-DD",
+        "WSB-KEU", "WSB-JNTR", "WSB-BGVN", "WSB-MLM", "WSB-BRB", "WSB-DD", "KEU-JNTR", "KEU-BGVN",
+        "KEU-MLM", "KEU-BRB", "KEU-DD", "JNTR-BGVN", "JNTR-MLM", "JNTR-BRB", "JNTR-DD", "BGVN-MLM",
+        "BGVN-BRB", "BGVN-DD", "MLM-BRB", "MLM-DD", "BRB-DD", 'SUR', 'BALE', 'PK', 'MVE', 'MO', 'MKPT', 'WKA', 'ANG', 'MA', 'WDS', 'KWV', 'KEM', 'DHS', 'BLNI', 'JEUR', 'PPJ', 'WSB', 'KEU', 'JNTR', 'BGVN', 'MLM', 'BRB', 'DD', 'LC-40', 'LC-42', 'LC-21', 'LC-19'
+    ],
+    "DD-SUR": [
+        "DD-BRB", "DD-MLM", "DD-BGVN", "DD-JNTR", "DD-KEU", "DD-WSB", "DD-PPJ", "DD-JEUR",
+        "DD-BLNI", "DD-DHS", "DD-KEM", "DD-KWV", "DD-WDS", "DD-MA", "DD-ANG", "DD-WKA",
+        "DD-MKPT", "DD-MO", "DD-MVE", "DD-PK", "DD-BALE", "DD-SUR", "BRB-MLM", "BRB-BGVN",
+        "BRB-JNTR", "BRB-KEU", "BRB-WSB", "BRB-PPJ", "BRB-JEUR", "BRB-BLNI", "BRB-DHS", "BRB-KEM",
+        "BRB-KWV", "BRB-WDS", "BRB-MA", "BRB-ANG", "BRB-WKA", "BRB-MKPT", "BRB-MO", "BRB-MVE",
+        "BRB-PK", "BRB-BALE", "BRB-SUR", "MLM-BGVN", "MLM-JNTR", "MLM-KEU", "MLM-WSB", "MLM-PPJ",
+        "MLM-JEUR", "MLM-BLNI", "MLM-DHS", "MLM-KEM", "MLM-KWV", "MLM-WDS", "MLM-MA", "MLM-ANG",
+        "MLM-WKA", "MLM-MKPT", "MLM-MO", "MLM-MVE", "MLM-PK", "MLM-BALE", "MLM-SUR", "BGVN-JNTR",
+        "BGVN-KEU", "BGVN-WSB", "BGVN-PPJ", "BGVN-JEUR", "BGVN-BLNI", "BGVN-DHS", "BGVN-KEM", "BGVN-KWV",
+        "BGVN-WDS", "BGVN-MA", "BGVN-ANG", "BGVN-WKA", "BGVN-MKPT", "BGVN-MO", "BGVN-MVE", "BGVN-PK",
+        "BGVN-BALE", "BGVN-SUR", "JNTR-KEU", "JNTR-WSB", "JNTR-PPJ", "JNTR-JEUR", "JNTR-BLNI", "JNTR-DHS",
+        "JNTR-KEM", "JNTR-KWV", "JNTR-WDS", "JNTR-MA", "JNTR-ANG", "JNTR-WKA", "JNTR-MKPT", "JNTR-MO",
+        "JNTR-MVE", "JNTR-PK", "JNTR-BALE", "JNTR-SUR", "KEU-WSB", "KEU-PPJ", "KEU-JEUR", "KEU-BLNI",
+        "KEU-DHS", "KEU-KEM", "KEU-KWV", "KEU-WDS", "KEU-MA", "KEU-ANG", "KEU-WKA", "KEU-MKPT",
+        "KEU-MO", "KEU-MVE", "KEU-PK", "KEU-BALE", "KEU-SUR", "WSB-PPJ", "WSB-JEUR", "WSB-BLNI",
+        "WSB-DHS", "WSB-KEM", "WSB-KWV", "WSB-WDS", "WSB-MA", "WSB-ANG", "WSB-WKA", "WSB-MKPT",
+        "WSB-MO", "WSB-MVE", "WSB-PK", "WSB-BALE", "WSB-SUR", "PPJ-JEUR", "PPJ-BLNI", "PPJ-DHS",
+        "PPJ-KEM", "PPJ-KWV", "PPJ-WDS", "PPJ-MA", "PPJ-ANG", "PPJ-WKA", "PPJ-MKPT", "PPJ-MO",
+        "PPJ-MVE", "PPJ-PK", "PPJ-BALE", "PPJ-SUR", "JEUR-BLNI", "JEUR-DHS", "JEUR-KEM", "JEUR-KWV",
+        "JEUR-WDS", "JEUR-MA", "JEUR-ANG", "JEUR-WKA", "JEUR-MKPT", "JEUR-MO", "JEUR-MVE", "JEUR-PK",
+        "JEUR-BALE", "JEUR-SUR", "BLNI-DHS", "BLNI-KEM", "BLNI-KWV", "BLNI-WDS", "BLNI-MA", "BLNI-ANG",
+        "BLNI-WKA", "BLNI-MKPT", "BLNI-MO", "BLNI-MVE", "BLNI-PK", "BLNI-BALE", "BLNI-SUR", "DHS-KEM",
+        "DHS-KWV", "DHS-WDS", "DHS-MA", "DHS-ANG", "DHS-WKA", "DHS-MKPT", "DHS-MO", "DHS-MVE",
+        "DHS-PK", "DHS-BALE", "DHS-SUR", "KEM-KWV", "KEM-WDS", "KEM-MA", "KEM-ANG", "KEM-WKA",
+        "KEM-MKPT", "KEM-MO", "KEM-MVE", "KEM-PK", "KEM-BALE", "KEM-SUR", "KWV-WDS", "KWV-MA",
+        "KWV-ANG", "KWV-WKA", "KWV-MKPT", "KWV-MO", "KWV-MVE", "KWV-PK", "KWV-BALE", "KWV-SUR",
+        "WDS-MA", "WDS-ANG", "WDS-WKA", "WDS-MKPT", "WDS-MO", "WDS-MVE", "WDS-PK", "WDS-BALE",
+        "WDS-SUR", "MA-ANG", "MA-WKA", "MA-MKPT", "MA-MO", "MA-MVE", "MA-PK", "MA-BALE",
+        "MA-SUR", "ANG-WKA", "ANG-MKPT", "ANG-MO", "ANG-MVE", "ANG-PK", "ANG-BALE", "ANG-SUR",
+        "WKA-MKPT", "WKA-MO", "WKA-MVE", "WKA-PK", "WKA-BALE", "WKA-SUR", "MKPT-MO", "MKPT-MVE",
+        "MKPT-PK", "MKPT-BALE", "MKPT-SUR", "MO-MVE", "MO-PK", "MO-BALE", "MO-SUR", "MVE-PK",
+        "MVE-BALE", "MVE-SUR", "PK-BALE", "PK-SUR", "BALE-SUR", 'SUR', 'BALE', 'PK', 'MVE', 'MO', 'MKPT', 'WKA', 'ANG', 'MA', 'WDS', 'KWV', 'KEM', 'DHS', 'BLNI', 'JEUR', 'PPJ', 'WSB', 'KEU', 'JNTR', 'BGVN', 'MLM', 'BRB', 'DD', 'LC-40', 'LC-42', 'LC-21', 'LC-19'
+    ],
+    "SUR-WADI": [
+        "SUR-TKWD", "SUR-HG", "SUR-TLT", "SUR-AKOR", "SUR-NGS", "SUR-BOT", "SUR-GUR", "SUR-GDGN",
+        "SUR-KUI", "SUR-DUD", "SUR-HDD", "SUR-SVG", "SUR-BBD", "SUR-TJSP", "SUR-KLBG", "SUR-HQR",
+        "SUR-MR", "SUR-SDB", "SUR-WADI", "TKWD-HG", "TKWD-TLT", "TKWD-AKOR", "TKWD-NGS", "TKWD-BOT",
+        "TKWD-GUR", "TKWD-GDGN", "TKWD-KUI", "TKWD-DUD", "TKWD-HDD", "TKWD-SVG", "TKWD-BBD", "TKWD-TJSP",
+        "TKWD-KLBG", "TKWD-HQR", "TKWD-MR", "TKWD-SDB", "TKWD-WADI", "HG-TLT", "HG-AKOR", "HG-NGS",
+        "HG-BOT", "HG-GUR", "HG-GDGN", "HG-KUI", "HG-DUD", "HG-HDD", "HG-SVG", "HG-BBD",
+        "HG-TJSP", "HG-KLBG", "HG-HQR", "HG-MR", "HG-SDB", "HG-WADI", "TLT-AKOR", "TLT-NGS",
+        "TLT-BOT", "TLT-GUR", "TLT-GDGN", "TLT-KUI", "TLT-DUD", "TLT-HDD", "TLT-SVG", "TLT-BBD",
+        "TLT-TJSP", "TLT-KLBG", "TLT-HQR", "TLT-MR", "TLT-SDB", "TLT-WADI", "AKOR-NGS", "AKOR-BOT",
+        "AKOR-GUR", "AKOR-GDGN", "AKOR-KUI", "AKOR-DUD", "AKOR-HDD", "AKOR-SVG", "AKOR-BBD", "AKOR-TJSP",
+        "AKOR-KLBG", "AKOR-HQR", "AKOR-MR", "AKOR-SDB", "AKOR-WADI", "NGS-BOT", "NGS-GUR", "NGS-GDGN",
+        "NGS-KUI", "NGS-DUD", "NGS-HDD", "NGS-SVG", "NGS-BBD", "NGS-TJSP", "NGS-KLBG", "NGS-HQR",
+        "NGS-MR", "NGS-SDB", "NGS-WADI", "BOT-GUR", "BOT-GDGN", "BOT-KUI", "BOT-DUD", "BOT-HDD",
+        "BOT-SVG", "BOT-BBD", "BOT-TJSP", "BOT-KLBG", "BOT-HQR", "BOT-MR", "BOT-SDB", "BOT-WADI",
+        "GUR-GDGN", "GUR-KUI", "GUR-DUD", "GUR-HDD", "GUR-SVG", "GUR-BBD", "GUR-TJSP", "GUR-KLBG",
+        "GUR-HQR", "GUR-MR", "GUR-SDB", "GUR-WADI", "GDGN-KUI", "GDGN-DUD", "GDGN-HDD", "GDGN-SVG",
+        "GDGN-BBD", "GDGN-TJSP", "GDGN-KLBG", "GDGN-HQR", "GDGN-MR", "GDGN-SDB", "GDGN-WADI", "KUI-DUD",
+        "KUI-HDD", "KUI-SVG", "KUI-BBD", "KUI-TJSP", "KUI-KLBG", "KUI-HQR", "KUI-MR", "KUI-SDB",
+        "KUI-WADI", "DUD-HDD", "DUD-SVG", "DUD-BBD", "DUD-TJSP", "DUD-KLBG", "DUD-HQR", "DUD-MR",
+        "DUD-SDB", "DUD-WADI", "HDD-SVG", "HDD-BBD", "HDD-TJSP", "HDD-KLBG", "HDD-HQR", "HDD-MR",
+        "HDD-SDB", "HDD-WADI", "SVG-BBD", "SVG-TJSP", "SVG-KLBG", "SVG-HQR", "SVG-MR", "SVG-SDB",
+        "SVG-WADI", "BBD-TJSP", "BBD-KLBG", "BBD-HQR", "BBD-MR", "BBD-SDB", "BBD-WADI", "TJSP-KLBG",
+        "TJSP-HQR", "TJSP-MR", "TJSP-SDB", "TJSP-WADI", "KLBG-HQR", "KLBG-MR", "KLBG-SDB", "KLBG-WADI",
+        "HQR-MR", "HQR-SDB", "HQR-WADI", "MR-SDB", "MR-WADI", "SDB-WADI", 'SUR', 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'GUR', 'GDGN', 
+        'KUI', 'DUD', 'HDD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'LC-1', 'LC-60', 'LC-61', 'LC-66', 'LC-74', 'LC-82', 'LC-91'
+    ],
+    "WADI-SUR": [
+        "WADI-SDB", "WADI-MR", "WADI-HQR", "WADI-KLBG", "WADI-TJSP", "WADI-BBD", "WADI-SVG", "WADI-HDD",
+        "WADI-DUD", "WADI-KUI", "WADI-GDGN", "WADI-GUR", "WADI-BOT", "WADI-NGS", "WADI-AKOR", "WADI-TLT",
+        "WADI-HG", "WADI-TKWD", "WADI-SUR", "SDB-MR", "SDB-HQR", "SDB-KLBG", "SDB-TJSP", "SDB-BBD",
+        "SDB-SVG", "SDB-HDD", "SDB-DUD", "SDB-KUI", "SDB-GDGN", "SDB-GUR", "SDB-BOT", "SDB-NGS",
+        "SDB-AKOR", "SDB-TLT", "SDB-HG", "SDB-TKWD", "SDB-SUR", "MR-HQR", "MR-KLBG", "MR-TJSP",
+        "MR-BBD", "MR-SVG", "MR-HDD", "MR-DUD", "MR-KUI", "MR-GDGN", "MR-GUR", "MR-BOT",
+        "MR-NGS", "MR-AKOR", "MR-TLT", "MR-HG", "MR-TKWD", "MR-SUR", "HQR-KLBG", "HQR-TJSP",
+        "HQR-BBD", "HQR-SVG", "HQR-HDD", "HQR-DUD", "HQR-KUI", "HQR-GDGN", "HQR-GUR", "HQR-BOT",
+        "HQR-NGS", "HQR-AKOR", "HQR-TLT", "HQR-HG", "HQR-TKWD", "HQR-SUR", "KLBG-TJSP", "KLBG-BBD",
+        "KLBG-SVG", "KLBG-HDD", "KLBG-DUD", "KLBG-KUI", "KLBG-GDGN", "KLBG-GUR", "KLBG-BOT", "KLBG-NGS",
+        "KLBG-AKOR", "KLBG-TLT", "KLBG-HG", "KLBG-TKWD", "KLBG-SUR", "TJSP-BBD", "TJSP-SVG", "TJSP-HDD",
+        "TJSP-DUD", "TJSP-KUI", "TJSP-GDGN", "TJSP-GUR", "TJSP-BOT", "TJSP-NGS", "TJSP-AKOR", "TJSP-TLT",
+        "TJSP-HG", "TJSP-TKWD", "TJSP-SUR", "BBD-SVG", "BBD-HDD", "BBD-DUD", "BBD-KUI", "BBD-GDGN",
+        "BBD-GUR", "BBD-BOT", "BBD-NGS", "BBD-AKOR", "BBD-TLT", "BBD-HG", "BBD-TKWD", "BBD-SUR",
+        "SVG-HDD", "SVG-DUD", "SVG-KUI", "SVG-GDGN", "SVG-GUR", "SVG-BOT", "SVG-NGS", "SVG-AKOR",
+        "SVG-TLT", "SVG-HG", "SVG-TKWD", "SVG-SUR", "HDD-DUD", "HDD-KUI", "HDD-GDGN", "HDD-GUR",
+        "HDD-BOT", "HDD-NGS", "HDD-AKOR", "HDD-TLT", "HDD-HG", "HDD-TKWD", "HDD-SUR", "DUD-KUI",
+        "DUD-GDGN", "DUD-GUR", "DUD-BOT", "DUD-NGS", "DUD-AKOR", "DUD-TLT", "DUD-HG", "DUD-TKWD",
+        "DUD-SUR", "KUI-GDGN", "KUI-GUR", "KUI-BOT", "KUI-NGS", "KUI-AKOR", "KUI-TLT", "KUI-HG",
+        "KUI-TKWD", "KUI-SUR", "GDGN-GUR", "GDGN-BOT", "GDGN-NGS", "GDGN-AKOR", "GDGN-TLT", "GDGN-HG",
+        "GDGN-TKWD", "GDGN-SUR", "GUR-BOT", "GUR-NGS", "GUR-AKOR", "GUR-TLT", "GUR-HG", "GUR-TKWD",
+        "GUR-SUR", "BOT-NGS", "BOT-AKOR", "BOT-TLT", "BOT-HG", "BOT-TKWD", "BOT-SUR", "NGS-AKOR",
+        "NGS-TLT", "NGS-HG", "NGS-TKWD", "NGS-SUR", "AKOR-TLT", "AKOR-HG", "AKOR-TKWD", "AKOR-SUR",
+        "TLT-HG", "TLT-TKWD", "TLT-SUR", "HG-TKWD", "HG-SUR", "TKWD-SUR", 'SUR', 'TKWD', 'HG', 'TLT', 'AKOR', 'NGS', 'BOT', 'GUR', 'GDGN', 'KUI', 'DUD', 'HDD', 'SVG', 'BBD', 'TJSP', 'KLBG', 'HQR', 'MR', 'SDB', 'WADI', 'LC-1', 'LC-60', 
+        'LC-61', 'LC-66', 'LC-74', 'LC-82', 'LC-91'
+    ],
+    "LUR-KWV": [
+        "LUR-HGL", "LUR-OSA", "LUR-MRX", "LUR-DKY", "LUR-KMRD", "LUR-YSI", "LUR-DRSV", "LUR-PJR",
+        "LUR-BTW", "LUR-SEI", "LUR-KWV", "HGL-OSA", "HGL-MRX", "HGL-DKY", "HGL-KMRD", "HGL-YSI",
+        "HGL-DRSV", "HGL-PJR", "HGL-BTW", "HGL-SEI", "HGL-KWV", "OSA-MRX", "OSA-DKY", "OSA-KMRD",
+        "OSA-YSI", "OSA-DRSV", "OSA-PJR", "OSA-BTW", "OSA-SEI", "OSA-KWV", "MRX-DKY", "MRX-KMRD",
+        "MRX-YSI", "MRX-DRSV", "MRX-PJR", "MRX-BTW", "MRX-SEI", "MRX-KWV", "DKY-KMRD", "DKY-YSI",
+        "DKY-DRSV", "DKY-PJR", "DKY-BTW", "DKY-SEI", "DKY-KWV", "KMRD-YSI", "KMRD-DRSV", "KMRD-PJR",
+        "KMRD-BTW", "KMRD-SEI", "KMRD-KWV", "YSI-DRSV", "YSI-PJR", "YSI-BTW", "YSI-SEI", "YSI-KWV",
+        "DRSV-PJR", "DRSV-BTW", "DRSV-SEI", "DRSV-KWV", "PJR-BTW", "PJR-SEI", "PJR-KWV", "BTW-SEI",
+        "BTW-KWV", "SEI-KWV", 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR'
+    ],
+    "KWV-LUR": [
+        "KWV-SEI", "KWV-BTW", "KWV-PJR", "KWV-DRSV", "KWV-YSI", "KWV-KMRD", "KWV-DKY", "KWV-MRX",
+        "KWV-OSA", "KWV-HGL", "KWV-LUR", "SEI-BTW", "SEI-PJR", "SEI-DRSV", "SEI-YSI", "SEI-KMRD",
+        "SEI-DKY", "SEI-MRX", "SEI-OSA", "SEI-HGL", "SEI-LUR", "BTW-PJR", "BTW-DRSV", "BTW-YSI",
+        "BTW-KMRD", "BTW-DKY", "BTW-MRX", "BTW-OSA", "BTW-HGL", "BTW-LUR", "PJR-DRSV", "PJR-YSI",
+        "PJR-KMRD", "PJR-DKY", "PJR-MRX", "PJR-OSA", "PJR-HGL", "PJR-LUR", "DRSV-YSI", "DRSV-KMRD",
+        "DRSV-DKY", "DRSV-MRX", "DRSV-OSA", "DRSV-HGL", "DRSV-LUR", "YSI-KMRD", "YSI-DKY", "YSI-MRX",
+        "YSI-OSA", "YSI-HGL", "YSI-LUR", "KMRD-DKY", "KMRD-MRX", "KMRD-OSA", "KMRD-HGL", "KMRD-LUR",
+        "DKY-MRX", "DKY-OSA", "DKY-HGL", "DKY-LUR", "MRX-OSA", "MRX-HGL", "MRX-LUR", "OSA-HGL",
+        "OSA-LUR", "HGL-LUR", 'SEI', 'BTW', 'PJR', 'DRSV', 'YSI', 'KMRD', 'DKY', 'MRX', 'OSA', 'HGL', 'LUR'
+    ],
+    "KWV-MRJ": [
+        "KWV-ARAG", "KWV-BLNK", "KWV-SGRE", "KWV-KVK", "KWV-LNP", "KWV-DLGN", "KWV-JTRD", "KWV-MSDG",
+        "KWV-JVA", "KWV-WSD", "KWV-SGLA", "KWV-PVR", "KWV-MLB", "KWV-MRJ", "ARAG-BLNK", "ARAG-SGRE",
+        "ARAG-KVK", "ARAG-LNP", "ARAG-DLGN", "ARAG-JTRD", "ARAG-MSDG", "ARAG-JVA", "ARAG-WSD", "ARAG-SGLA",
+        "ARAG-PVR", "ARAG-MLB", "ARAG-MRJ", "BLNK-SGRE", "BLNK-KVK", "BLNK-LNP", "BLNK-DLGN", "BLNK-JTRD",
+        "BLNK-MSDG", "BLNK-JVA", "BLNK-WSD", "BLNK-SGLA", "BLNK-PVR", "BLNK-MLB", "BLNK-MRJ", "SGRE-KVK",
+        "SGRE-LNP", "SGRE-DLGN", "SGRE-JTRD", "SGRE-MSDG", "SGRE-JVA", "SGRE-WSD", "SGRE-SGLA", "SGRE-PVR",
+        "SGRE-MLB", "SGRE-MRJ", "KVK-LNP", "KVK-DLGN", "KVK-JTRD", "KVK-MSDG", "KVK-JVA", "KVK-WSD",
+        "KVK-SGLA", "KVK-PVR", "KVK-MLB", "KVK-MRJ", "LNP-DLGN", "LNP-JTRD", "LNP-MSDG", "LNP-JVA",
+        "LNP-WSD", "LNP-SGLA", "LNP-PVR", "LNP-MLB", "LNP-MRJ", "DLGN-JTRD", "DLGN-MSDG", "DLGN-JVA",
+        "DLGN-WSD", "DLGN-SGLA", "DLGN-PVR", "DLGN-MLB", "DLGN-MRJ", "JTRD-MSDG", "JTRD-JVA", "JTRD-WSD",
+        "JTRD-SGLA", "JTRD-PVR", "JTRD-MLB", "JTRD-MRJ", "MSDG-JVA", "MSDG-WSD", "MSDG-SGLA", "MSDG-PVR",
+        "MSDG-MLB", "MSDG-MRJ", "JVA-WSD", "JVA-SGLA", "JVA-PVR", "JVA-MLB", "JVA-MRJ", "WSD-SGLA",
+        "WSD-PVR", "WSD-MLB", "WSD-MRJ", "SGLA-PVR", "SGLA-MLB", "SGLA-MRJ", "PVR-MLB", "PVR-MRJ",
+        "MLB-MRJ", 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'
+    ],
+    "MRJ-KWV": [
+        "MRJ-MLB", "MRJ-PVR", "MRJ-SGLA", "MRJ-WSD", "MRJ-JVA", "MRJ-MSDG", "MRJ-JTRD", "MRJ-DLGN",
+        "MRJ-LNP", "MRJ-KVK", "MRJ-SGRE", "MRJ-BLNK", "MRJ-ARAG", "MRJ-KWV", "MLB-PVR", "MLB-SGLA",
+        "MLB-WSD", "MLB-JVA", "MLB-MSDG", "MLB-JTRD", "MLB-DLGN", "MLB-LNP", "MLB-KVK", "MLB-SGRE",
+        "MLB-BLNK", "MLB-ARAG", "MLB-KWV", "PVR-SGLA", "PVR-WSD", "PVR-JVA", "PVR-MSDG", "PVR-JTRD",
+        "PVR-DLGN", "PVR-LNP", "PVR-KVK", "PVR-SGRE", "PVR-BLNK", "PVR-ARAG", "PVR-KWV", "SGLA-WSD",
+        "SGLA-JVA", "SGLA-MSDG", "SGLA-JTRD", "SGLA-DLGN", "SGLA-LNP", "SGLA-KVK", "SGLA-SGRE", "SGLA-BLNK",
+        "SGLA-ARAG", "SGLA-KWV", "WSD-JVA", "WSD-MSDG", "WSD-JTRD", "WSD-DLGN", "WSD-LNP", "WSD-KVK",
+        "WSD-SGRE", "WSD-BLNK", "WSD-ARAG", "WSD-KWV", "JVA-MSDG", "JVA-JTRD", "JVA-DLGN", "JVA-LNP",
+        "JVA-KVK", "JVA-SGRE", "JVA-BLNK", "JVA-ARAG", "JVA-KWV", "MSDG-JTRD", "MSDG-DLGN", "MSDG-LNP",
+        "MSDG-KVK", "MSDG-SGRE", "MSDG-BLNK", "MSDG-ARAG", "MSDG-KWV", "JTRD-DLGN", "JTRD-LNP", "JTRD-KVK",
+        "JTRD-SGRE", "JTRD-BLNK", "JTRD-ARAG", "JTRD-KWV", "DLGN-LNP", "DLGN-KVK", "DLGN-SGRE", "DLGN-BLNK",
+        "DLGN-ARAG", "DLGN-KWV", "LNP-KVK", "LNP-SGRE", "LNP-BLNK", "LNP-ARAG", "LNP-KWV", "KVK-SGRE",
+        "KVK-BLNK", "KVK-ARAG", "KVK-KWV", "SGRE-BLNK", "SGRE-ARAG", "SGRE-KWV", "BLNK-ARAG", "BLNK-KWV",
+        "ARAG-KWV", 'ARAG', 'BLNK', 'SGRE', 'KVK', 'LNP', 'DLGN', 'JTRD', 'MSDG', 'JVA', 'WSD', 'SGLA', 'PVR', 'MLB'
+    ]
 }
 
 FOOTPLATE_ROUTES = list(FOOTPLATE_ROUTE_HIERARCHY.keys())
@@ -967,23 +1162,24 @@ def build_excel_export(export_df, sheet_name):
         export_df.to_excel(writer, index=False, sheet_name=sheet_name)
         ws = writer.sheets[sheet_name]
 
-        date_style = NamedStyle(name=f"date_style_{sheet_name}", number_format="DD-MM-YYYY")
         thin_border = Border(
             left=Side(style='thin'), right=Side(style='thin'),
             top=Side(style='thin'), bottom=Side(style='thin')
         )
 
+        # Apply border + wrap alignment to every cell first
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
             for cell in row:
                 cell.alignment = Alignment(wrap_text=True, vertical="top")
                 cell.border = thin_border
 
+        # Then layer the date format on top WITHOUT touching border/alignment
         if "Date of Inspection" in export_df.columns:
             date_col_idx = export_df.columns.get_loc("Date of Inspection") + 1
             for row in ws.iter_rows(min_row=2, min_col=date_col_idx, max_col=date_col_idx,
                                      max_row=len(export_df) + 1):
                 for cell in row:
-                    cell.style = date_style
+                    cell.number_format = "DD-MM-YYYY"   # <-- direct format, not cell.style
 
         for col in ws.columns:
             max_length = 0
@@ -1016,6 +1212,8 @@ def build_excel_export(export_df, sheet_name):
 # =========================================================================
 def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.02):
     """Pie chart with leader lines + labels, and a counts table on the right.
+    Labels are evenly spaced top-to-bottom on each side so they never overlap,
+    and the figure/table scale with the number of categories.
     """
     work = df.copy()
     work[group_col] = work[group_col].fillna("").astype(str).str.strip()
@@ -1041,6 +1239,8 @@ def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.
             [major, pd.DataFrame([{group_col: "Others", "Count": int(minor["Count"].sum())}])],
             ignore_index=True,
         )
+    major = major.sort_values("Count", ascending=False).reset_index(drop=True)
+    n_slices = len(major)
 
     base_colors = [
         "#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F",
@@ -1048,67 +1248,76 @@ def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.
         "#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD",
         "#8C564B", "#E377C2", "#7F7F7F", "#BCBD22", "#17BECF",
     ]
-    colors = [base_colors[i % len(base_colors)] for i in range(len(major))]
+    colors = [base_colors[i % len(base_colors)] for i in range(n_slices)]
 
-    # Table rows: name + count only
     table_rows = [[str(r[group_col]), int(r["Count"])] for _, r in summary.iterrows()]
     table_rows.append(["TOTAL", total])
+    n_table_rows = len(table_rows)
 
-    # Layout: pie left (with room for labels), table right
-    fig = plt.figure(figsize=(12, 5.5), facecolor="white")
-    ax_pie = fig.add_axes([0.02, 0.12, 0.50, 0.78])
-    ax_tbl = fig.add_axes([0.58, 0.10, 0.40, 0.80])
+    # ---- Dynamic sizing so nothing gets cramped as category count grows ----
+    fig_height = max(5.5, 0.34 * n_table_rows + 2.0, 0.5 * n_slices + 2.5)
+    fig = plt.figure(figsize=(13, fig_height), facecolor="white")
+    ax_pie = fig.add_axes([0.03, 0.08, 0.46, 0.84])
+    ax_tbl = fig.add_axes([0.58, 0.06, 0.40, 0.88])
     ax_tbl.axis("off")
 
     wedges, texts, autotexts = ax_pie.pie(
         major["Count"].tolist(),
         colors=colors,
         startangle=90,
-        autopct="%1.1f%%",
-        pctdistance=0.55,
-        textprops=dict(color="black", fontsize=8),
+        autopct=lambda pct: f"{pct:.1f}%" if pct >= 4 else "",  # hide autopct on tiny slivers to cut clutter
+        pctdistance=0.72,
+        textprops=dict(color="white", fontsize=8, fontweight="bold"),
         wedgeprops=dict(edgecolor="white", linewidth=1.2),
     )
-    for t in autotexts:
-        t.set_fontsize(8)
-        t.set_fontweight("bold")
 
-    # Leader lines + labels — alternate left/right around the pie
-    for i, (wedge, (_, row)) in enumerate(zip(wedges, major.iterrows())):
-        ang = (wedge.theta2 + wedge.theta1) / 2.0
-        x = np.cos(np.deg2rad(ang))
-        y = np.sin(np.deg2rad(ang))
+    # Angle (deg) and unit-circle x/y for each wedge's midpoint
+    angles = [(w.theta1 + w.theta2) / 2.0 for w in wedges]
+    xs = [np.cos(np.deg2rad(a)) for a in angles]
+    ys = [np.sin(np.deg2rad(a)) for a in angles]
 
-        # Prefer left side for labels so they stay away from the table
-        # but allow right-side labels only for slices clearly on the right
-        # and keep them close to the pie (short lines)
-        if x >= 0:
-            lx = 1.25
-            ha = "left"
-        else:
-            lx = -1.25
-            ha = "right"
-        ly = 1.15 * y
+    # Split slices into right-side / left-side labels, ordered top-to-bottom
+    right_idx = sorted([i for i in range(n_slices) if xs[i] >= 0], key=lambda i: -ys[i])
+    left_idx = sorted([i for i in range(n_slices) if xs[i] < 0], key=lambda i: -ys[i])
 
-        label = f"{row[group_col]} ({int(row['Count'])})"
-        ax_pie.annotate(
-            label,
-            xy=(0.92 * x, 0.92 * y),
-            xytext=(lx, ly),
-            ha=ha,
-            va="center",
-            fontsize=8,
-            bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="#AAAAAA", alpha=0.9),
-            arrowprops=dict(arrowstyle="-", color="#555555", lw=0.8,
-                            connectionstyle="arc3,rad=0"),
-        )
+    # Vertical range for labels scales with how many need to fit on the busiest side
+    max_labels_per_side = max(len(right_idx), len(left_idx), 1)
+    label_span = max(1.15, 0.24 * (max_labels_per_side - 1))
+    font_size = 8 if max_labels_per_side <= 10 else 7
 
-    ax_pie.set_xlim(-1.7, 1.7)
-    ax_pie.set_ylim(-1.5, 1.5)
+    def place_labels(idx_list, side):
+        n = len(idx_list)
+        if n == 0:
+            return
+        label_ys = [0.0] if n == 1 else np.linspace(label_span, -label_span, n)
+        lx = 1.42 if side == "right" else -1.42
+        ha = "left" if side == "right" else "right"
+        rad = 0.05 if side == "right" else -0.05
+        for label_y, i in zip(label_ys, idx_list):
+            row = major.iloc[i]
+            label = f"{row[group_col]} ({int(row['Count'])})"
+            ax_pie.annotate(
+                label,
+                xy=(0.95 * xs[i], 0.95 * ys[i]),
+                xytext=(lx, label_y),
+                ha=ha, va="center", fontsize=font_size,
+                bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="#AAAAAA", alpha=0.95),
+                arrowprops=dict(arrowstyle="-", color="#777777", lw=0.7,
+                                 connectionstyle=f"arc3,rad={rad}"),
+            )
+
+    place_labels(right_idx, "right")
+    place_labels(left_idx, "left")
+
+    ax_pie.set_xlim(-2.1, 2.1)
+    ax_pie.set_ylim(-(label_span + 0.35), label_span + 0.35)
     ax_pie.set_aspect("equal")
 
-    # Table
+    # ---- Table ----
     col_labels = [group_col, "Count"]
+    table_font = 9 if n_table_rows <= 20 else 7.5
+    row_scale = 1.5 if n_table_rows <= 20 else max(0.9, 22.0 / n_table_rows)
+
     table = ax_tbl.table(
         cellText=table_rows,
         colLabels=col_labels,
@@ -1116,27 +1325,26 @@ def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.
         cellLoc="left",
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(9)
-    table.scale(1.05, 1.5)
+    table.set_fontsize(table_font)
+    table.scale(1.05, row_scale)
 
     n_data = len(table_rows) - 1  # exclude TOTAL
     for j in range(2):
         cell = table[(0, j)]
         cell.set_facecolor("#1F4E79")
-        cell.set_text_props(color="white", fontweight="bold", fontsize=9, ha="center")
+        cell.set_text_props(color="white", fontweight="bold", fontsize=table_font, ha="center")
 
     for i in range(1, n_data + 1):
         alt = "#F5F7FA" if i % 2 == 0 else "#FFFFFF"
         table[(i, 0)].set_facecolor(alt)
-        table[(i, 0)].set_text_props(ha="left", fontsize=9)
+        table[(i, 0)].set_text_props(ha="left", fontsize=table_font)
         table[(i, 1)].set_facecolor(alt)
-        table[(i, 1)].set_text_props(ha="center", fontsize=9)
+        table[(i, 1)].set_text_props(ha="center", fontsize=table_font)
 
-    # TOTAL
     last = n_data + 1
     for j in range(2):
         table[(last, j)].set_facecolor("#E8F0FE")
-        table[(last, j)].set_text_props(fontweight="bold", fontsize=9,
+        table[(last, j)].set_text_props(fontweight="bold", fontsize=table_font,
                                         ha="center" if j == 1 else "left")
 
     for i in range(last + 1):
@@ -1147,8 +1355,8 @@ def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.
         cell.set_edgecolor("#D0D7DE")
         cell.set_linewidth(0.6)
 
-    fig.suptitle(chart_title, fontsize=14, fontweight="bold", y=0.97, color="#1A1A1A")
-    fig.text(0.5, 0.02, " | ".join(caption_parts), ha="center", fontsize=7.5, color="#666666")
+    fig.suptitle(chart_title, fontsize=14, fontweight="bold", y=0.98, color="#1A1A1A")
+    fig.text(0.5, 0.015, " | ".join(caption_parts), ha="center", fontsize=7.5, color="#666666")
 
     buf = BytesIO()
     plt.savefig(buf, format="png", dpi=160, bbox_inches="tight", facecolor="white")
@@ -1164,7 +1372,6 @@ def render_pie_breakdown(df, group_col, chart_title, caption_parts, threshold=0.
         key=f"dl_{group_col}_{chart_title}",
         use_container_width=True,
     )
-
 
 
 # =========================================================================
@@ -1222,7 +1429,7 @@ if st.session_state.df is None:
 # =========================================================================
 # MAIN TABS
 # =========================================================================
-tabs = st.tabs(["📝 View Records", "📊 Analytics", "📨 Inspections"])
+tabs = st.tabs(["📝 View Records", "📊 Analytics", "📨 Inspections", " 💡Smart Analysis"])
 
 with tabs[0]:
     df = st.session_state.df
@@ -1437,50 +1644,66 @@ with tabs[0]:
         # ---- AgGrid configuration ----
         grid_display_df = editable_df.drop(columns=["_status_plain"], errors="ignore")
         gb = GridOptionsBuilder.from_dataframe(grid_display_df)
+        
+        # flex=1 is the default "share" every column gets of the available width;
+        # columns below override that share so wide/narrow content is proportioned
+        # sensibly, but everything still always fits the screen width.
         gb.configure_default_column(
             editable=False,
             wrapText=True,
             autoHeight=True,
             resizable=True,
-            suppressMovable=False,  # helps on touch devices
+            suppressMovable=False,
+            flex=1,
+            minWidth=90,
         )
+        
+        col_flex = {
+            "Date of Inspection": (1.0, 110),
+            "Type of Inspection": (1.2, 140),
+            "Head": (1.0, 110),
+            "Sub Head": (1.2, 130),
+            "Location": (1.0, 100),
+            "Deficiencies Noted": (3.0, 260),   # gets the most room, but still bounded
+            "Inspection By": (1.3, 140),
+            "Action By": (1.3, 140),
+            "Feedback": (1.5, 160),
+            "User Feedback/Remark": (2.0, 180),
+            "Status": (0.8, 100),
+            TIMESTAMP_COL_NAME: (1.3, 150),
+        }
+        for col_name, (flex_val, min_w) in col_flex.items():
+            if col_name in grid_display_df.columns:
+                gb.configure_column(col_name, flex=flex_val, minWidth=min_w)
+        
         if "User Feedback/Remark" in grid_display_df.columns:
             gb.configure_column(
                 "User Feedback/Remark",
                 editable=True, wrapText=True, autoHeight=True,
                 cellEditor="agTextCellEditor", cellEditorPopup=False,
-                cellEditorParams={"maxLength": 4000}
+                cellEditorParams={"maxLength": 4000},
+                flex=2, minWidth=180,
             )
+        
         gb.configure_column("_original_sheet_index", hide=True)
         gb.configure_column("_sheet_row", hide=True)
         gb.configure_grid_options(
             singleClickEdit=True,
             suppressHorizontalScroll=False,
-            enableCellTextSelection=True,
+            enableCellTextSelection=False,   # or just delete this line
             ensureDomOrder=True,
         )
-
-        auto_size_js = JsCode("""
-        function(params) {
-            let allColumnIds = [];
-            params.columnApi.getAllColumns().forEach(function(column) {
-                allColumnIds.push(column.getColId());
-            });
-            params.columnApi.autoSizeColumns(allColumnIds);
-        }
-        """)
-        gb.configure_grid_options(onFirstDataRendered=auto_size_js)
         grid_options = gb.build()
-
+        
         st.markdown("#### 🚈 Inspection Details")
-        st.caption("Type your compliance in 'User Feedback/Remark' column. Use column headers to sort. On mobile you can scroll the grid horizontally.")
+        st.caption("Type your compliance in 'User Feedback/Remark' column. Use column headers to sort. Columns auto-fit the screen width — drag a header edge if you'd still like to fine-tune one.")
         grid_response = AgGrid(
             grid_display_df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.VALUE_CHANGED,
-            height=500,                 # CSS will reduce this further on small screens
+            height=500,
             allow_unsafe_jscode=True,
-            fit_columns_on_grid_load=False,
+            fit_columns_on_grid_load=True,
             theme="streamlit",
         )
         edited_df = pd.DataFrame(grid_response["data"])
@@ -1933,3 +2156,788 @@ with tabs[2]:
                                     use_container_width=True,
                                     key=f"insp_dl_{g_name}_{g_phone}_{g_date}",
                                 )
+
+with tabs[3]:
+
+
+
+    
+    # ---------------------------------------------------------------------------
+    # Import unified dashboard module (same folder or on PYTHONPATH)
+    # ---------------------------------------------------------------------------
+    import railway_safety_unified as rs
+    
+    # ---------------------------------------------------------------------------
+    # Department catalogue
+    # key → (label, detailed_key, general_key)
+    # ---------------------------------------------------------------------------
+    DEPARTMENTS: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {
+        "elect_g": ("ELECT / G", "elect_g", "elect_g"),
+        "elect_trd": ("ELECT / TRD", "elect_trd", "elect_trd"),
+        "elect_tro": ("ELECT / TRO", "elect_tro", "elect_tro"),
+        "engg": ("Engineering – Sr.DEN/C", "engg", "engg"),
+        "engg_s": ("Engineering – Sr.DEN/S", "engg_s", "engg_s"),
+        "engg_track": ("Engineering – DEN/TRACK", "engg_track", "engg_track"),
+        "engg_full": ("Engineering – Full", "engg_full", "engg_full"),
+        "operating": ("Operating (OPTG)", "operating", "operating"),
+        "commercial": ("Commercial", "commercial", "commercial"),
+        "mechanical": ("Mechanical", "mechanical", "mechanical"),
+        "snt": ("S&T / Signal & Telecom", "snt", "snt"),
+    }
+    
+    # Expected output filenames from detailed generators (may vary slightly)
+    DETAILED_OUT_HINTS = {
+        "elect_g": "ELECT_G",
+        "engg": "ENGINEERING",
+        "engg_c": "ENGINEERING",
+        "engg_s": "ENGINEERING",
+        "engg_track": "ENGINEERING",
+        "engg_full": "ENGINEERING",
+        "elect_trd": "ELECT_TRD",
+        "elect_tro": "ELECT_TRO",
+        "tro": "ELECT_TRO",
+        "snt": "SNT",
+        "s_and_t": "SNT",
+        "mechanical": "MECHANICAL",
+        "operating": "OPERATING",
+        "commercial": "COMMERCIAL",
+    }
+    
+    
+    # =============================================================================
+    # Helpers
+    # =============================================================================
+    
+    def resolve_output_paths() -> Tuple[Path, Path, Path]:
+        """Just resolve the base/logo/output folder from the unified module.
+        No Excel-file resolution is needed any more — Smart Analysis now reads
+        live from the same Google Sheet as the rest of the app."""
+        base = Path(rs.BASE_DIR)
+        logo = Path(rs.LOGO_FILE)
+        out = Path(rs.OUTPUT_FOLDER)
+        out.mkdir(parents=True, exist_ok=True)
+        return base, logo, out
+    
+    
+    def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df.columns = df.columns.astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
+        # Unify Action By
+        if "Action by" in df.columns and "Action By" not in df.columns:
+            df = df.rename(columns={"Action by": "Action By"})
+        if "Date of Inspection" in df.columns:
+            df["Date of Inspection"] = pd.to_datetime(
+                df["Date of Inspection"], errors="coerce", dayfirst=True
+            )
+        return df
+    
+    
+    @st.cache_data(ttl=30, show_spinner=False)
+    def load_smart_analysis_data() -> pd.DataFrame:
+        """Pull the live deficiencies Google Sheet (via the same `load_data()`
+        used by the View Records / Analytics tabs) and compute a 'Status'
+        column with the SAME keyword-based classify_feedback() logic used
+        everywhere else in this app — instead of requiring an uploaded Excel
+        file that already had a pre-typed 'Status' column.
+
+        Bucketing rules (identical to the View Records tab):
+          - Feedback blank            -> "No Response"
+          - Feedback/remark present   -> classify_feedback() -> "Resolved" / "Pending"
+        """
+        raw = load_data()  # cached live Google Sheet read, defined earlier in this file
+        df = normalize_columns(raw)
+
+        for col in ["Feedback", "User Feedback/Remark", "Head", "Sub Head",
+                    "Location", "Deficiencies Noted", "Action By"]:
+            if col not in df.columns:
+                df[col] = ""
+
+        def _row_status(row) -> str:
+            fb = str(row.get("Feedback", "")).strip()
+            if not fb:
+                return "No Response"
+            return classify_feedback(row.get("Feedback", ""), row.get("User Feedback/Remark", ""))
+
+        df["Status"] = df.apply(_row_status, axis=1)
+        return df
+    
+    
+    def filter_by_date(
+        df: pd.DataFrame,
+        start: Optional[date],
+        end: Optional[date],
+    ) -> pd.DataFrame:
+        if "Date of Inspection" not in df.columns:
+            return df
+        out = df.copy()
+        if start is not None:
+            out = out[out["Date of Inspection"] >= pd.Timestamp(start)]
+        if end is not None:
+            out = out[out["Date of Inspection"] <= pd.Timestamp(end) + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)]
+        return out
+    
+    
+    def apply_report_period(start: date, end: date) -> None:
+        """Update REPORT_MONTHS / YEAR / titles in unified module for this run."""
+        months = sorted(set(
+            pd.date_range(start=start, end=end, freq="D").month.tolist()
+        ))
+        if not months:
+            months = [start.month]
+        years = sorted(set(
+            pd.date_range(start=start, end=end, freq="D").year.tolist()
+        ))
+        year = years[-1] if years else start.year
+    
+        rs.REPORT_MONTHS = months
+        rs.REPORT_YEAR = year
+        # Rebuild month labels for this year
+        names = {
+            1: "January", 2: "February", 3: "March", 4: "April",
+            5: "May", 6: "June", 7: "July", 8: "August",
+            9: "September", 10: "October", 11: "November", 12: "December",
+        }
+        rs.MONTH_LABELS = {m: f"{names[m]}-{year}" for m in range(1, 13)}
+        rs.PERIOD_TITLE = ""
+        rs.SECTION_PERIOD = ""
+        rs.DATA_AS_ON = end.strftime("%d %B %Y").upper()
+        # General PIL period text
+        rs.PERIOD_TEXT = (
+            f"PERFORMANCE PERIOD: {start.strftime('%d %b %Y')} to {end.strftime('%d %b %Y')}"
+        )
+    
+    
+    def write_temp_excel(df: pd.DataFrame) -> Path:
+        """Write filtered frame to a temp xlsx used by generators."""
+        tmp = tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False)
+        tmp.close()
+        path = Path(tmp.name)
+        df.to_excel(path, index=False)
+        return path
+    
+    
+    def head_filter_for_dept(df: pd.DataFrame, dept_key: str) -> pd.DataFrame:
+        """Rough head filter for Excel exports (not used to change generator logic)."""
+        if "Head" not in df.columns:
+            return df
+        h = df["Head"].fillna("").astype(str).str.upper().str.replace(r"[\s.]", "", regex=True)
+        mapping = {
+            "elect_g": ["ELECT/G", "ELECTG", "ELECT-G"],
+            "elect_trd": ["ELECT/TRD", "ELECTTRD", "ELECT-TRD"],
+            "elect_tro": ["ELECT/TRO", "ELECTTRO", "ELECT-TRO", "TRACTIONOPERATION"],
+            "engg": ["ENGINEERING"],
+            "engg_s": ["ENGINEERING"],
+            "engg_track": ["ENGINEERING"],
+            "engg_full": ["ENGINEERING"],
+            "operating": ["OPTG", "OPERATING"],
+            "commercial": ["COMMERCIAL"],
+            "mechanical": ["MECHANICAL"],
+            "snt": ["SIGNAL", "S&T", "SNT", "TELECOM", "TELECOMMUNICATION"],
+        }
+        keys = mapping.get(dept_key, [])
+        if not keys:
+            return df
+        mask = False
+        for k in keys:
+            k2 = k.upper().replace(" ", "").replace(".", "")
+            mask = mask | h.str.contains(k2.replace("/", ""), regex=False, na=False) | (h == k2)
+            # also allow slash forms
+            mask = mask | h.str.contains(k.upper().replace(" ", ""), regex=False, na=False)
+        # Engineering DEN filter for Action By when relevant
+        sub = df[mask].copy() if hasattr(mask, "__len__") else df
+        if dept_key in ("engg", "engg_s", "engg_track") and "Action By" in sub.columns:
+            den = {
+                "engg": "SR.DEN/C",
+                "engg_s": "SR.DEN/S",
+                "engg_track": "DEN/TRACK",
+            }[dept_key]
+            ab = sub["Action By"].fillna("").astype(str).str.upper().str.replace(" ", "", regex=False)
+            sub = sub[ab.str.replace("\\", "/", regex=False) == den.replace("\\", "/")]
+        return sub
+    
+    
+    def classify_status_series(s: pd.Series) -> pd.Series:
+        """The 'Status' column arriving here was already bucketed into
+        Resolved / Pending / No Response by load_smart_analysis_data(),
+        using the same keyword-based classify_feedback() logic as the
+        View Records tab — so this just normalises stray blanks instead
+        of re-classifying free text."""
+        return s.fillna("Pending").astype(str).str.strip().replace({"": "Pending"})
+    
+    
+    def _original_columns(df: pd.DataFrame) -> List[str]:
+        """Prefer original source columns; drop helper columns we may have added."""
+        drop = {"STATUS_GROUP", "Month", "Year", "Date", "Location_Clean",
+                "Deficiency_Clean", "Status_Clean", "ACTION_BY_NORMALIZED",
+                "Location_Norm", "ADSTE", "ELECT_G", "Classification_Method",
+                "JURISDICTION", "Lobby/Running Room", "Lobby Keyword",
+                "Running Room Keyword"}
+        cols = [c for c in df.columns if c not in drop]
+        return cols if cols else list(df.columns)
+    
+    
+    def _safe_sheet_name(name: str, used: set) -> str:
+        """Excel sheet name max 31 chars, unique."""
+        base = str(name).strip() or "Sheet"
+        base = "".join(ch if ch not in r"[]:*?/\\" else "_" for ch in base)
+        base = base[:28] if len(base) > 28 else base
+        candidate = base
+        i = 2
+        while candidate in used or not candidate:
+            suffix = f"_{i}"
+            candidate = (base[: 31 - len(suffix)] + suffix)
+            i += 1
+        used.add(candidate)
+        return candidate
+    
+    
+    def build_subhead_package(df: pd.DataFrame, dept_key: str) -> dict:
+        """
+        Returns dict:
+          summary_xlsx  – SubHead_Summary + SubHead_By_Month only (no all-rows dump)
+          per_subhead   – list of {name, bytes} one Excel per Sub Head (original cols)
+          full_xlsx     – all department records, original column format
+        """
+        empty = {
+            "summary_xlsx": None,
+            "per_subhead": [],
+            "full_xlsx": None,
+        }
+        work = head_filter_for_dept(df, dept_key)
+        if work.empty or "Sub Head" not in work.columns:
+            buf = io.BytesIO()
+            pd.DataFrame({"Message": ["No records for this department / date range"]}).to_excel(
+                buf, index=False
+            )
+            empty["summary_xlsx"] = buf.getvalue()
+            empty["full_xlsx"] = buf.getvalue()
+            return empty
+    
+        work = work.copy()
+        work["Sub Head"] = work["Sub Head"].fillna("").astype(str).str.strip()
+        work = work[work["Sub Head"] != ""].copy()
+        if "Date of Inspection" in work.columns:
+            work["Month"] = pd.to_datetime(work["Date of Inspection"], errors="coerce").dt.month
+        if "Status" in work.columns:
+            work["STATUS_GROUP"] = classify_status_series(work["Status"])
+        else:
+            work["STATUS_GROUP"] = "Pending"
+    
+        orig_cols = _original_columns(work)
+    
+        # --- Summary only (no All_Records sheet) ---
+        summary = (
+            work.groupby("Sub Head")
+            .agg(
+                Total=("Sub Head", "size"),
+                Resolved=("STATUS_GROUP", lambda x: (x == "Resolved").sum()),
+                Pending=("STATUS_GROUP", lambda x: (x == "Pending").sum()),
+                No_Response=("STATUS_GROUP", lambda x: (x == "No Response").sum()),
+            )
+            .reset_index()
+            .sort_values("Total", ascending=False)
+        )
+        if len(summary):
+            summary["% Resolved"] = (summary["Resolved"] / summary["Total"] * 100).round(2)
+    
+        month_sheet = None
+        if "Month" in work.columns:
+            month_sheet = (
+                work.groupby(["Sub Head", "Month"]).size().unstack(fill_value=0).reset_index()
+            )
+    
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+            summary.to_excel(writer, sheet_name="SubHead_Summary", index=False)
+            if month_sheet is not None:
+                month_sheet.to_excel(writer, sheet_name="SubHead_By_Month", index=False)
+        summary_bytes = buf.getvalue()
+    
+        # --- One Excel per Sub Head (original columns only) ---
+        per_subhead = []
+        for sh in summary["Sub Head"].tolist():
+            part = work[work["Sub Head"] == sh][orig_cols].copy()
+            b = io.BytesIO()
+            part.to_excel(b, index=False, sheet_name="Records")
+            safe = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in str(sh))[:40]
+            per_subhead.append({"name": str(sh), "file": f"{safe}_Records.xlsx", "bytes": b.getvalue()})
+    
+        # --- Full department records (original columns) ---
+        full_buf = io.BytesIO()
+        work[orig_cols].to_excel(full_buf, index=False, sheet_name="Full_Records")
+        full_bytes = full_buf.getvalue()
+    
+        # Also one workbook with each sub-head as its own sheet + Full at end
+        multi = io.BytesIO()
+        used = set()
+        with pd.ExcelWriter(multi, engine="openpyxl") as writer:
+            summary.to_excel(writer, sheet_name="SubHead_Summary", index=False)
+            used.add("SubHead_Summary")
+            if month_sheet is not None:
+                month_sheet.to_excel(writer, sheet_name="SubHead_By_Month", index=False)
+                used.add("SubHead_By_Month")
+            for sh in summary["Sub Head"].tolist():
+                part = work[work["Sub Head"] == sh][orig_cols]
+                sname = _safe_sheet_name(str(sh), used)
+                part.to_excel(writer, sheet_name=sname, index=False)
+            work[orig_cols].to_excel(writer, sheet_name=_safe_sheet_name("FULL_RECORDS", used), index=False)
+        multi_bytes = multi.getvalue()
+    
+        return {
+            "summary_xlsx": summary_bytes,
+            "per_subhead": per_subhead,
+            "full_xlsx": full_bytes,
+            "combined_xlsx": multi_bytes,  # summary + one sheet per sub-head + full
+        }
+    
+    
+    def build_pending_excel(df: pd.DataFrame, dept_key: str) -> bytes:
+        """Pending + No Response records in ORIGINAL Excel column format."""
+        work = head_filter_for_dept(df, dept_key)
+        if work.empty:
+            buf = io.BytesIO()
+            pd.DataFrame({"Message": ["No records for this department / date range"]}).to_excel(
+                buf, index=False
+            )
+            return buf.getvalue()
+    
+        work = work.copy()
+        if "Status" in work.columns:
+            work["STATUS_GROUP"] = classify_status_series(work["Status"])
+        else:
+            work["STATUS_GROUP"] = "Pending"
+    
+        pending = work[work["STATUS_GROUP"].isin(["Pending", "No Response"])].copy()
+        orig_cols = _original_columns(pending)
+        out = pending[orig_cols] if len(pending) else pd.DataFrame(columns=orig_cols)
+    
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+            out.to_excel(writer, sheet_name="Pending_Records", index=False)
+            # light summary only on 2nd sheet
+            if "STATUS_GROUP" in pending.columns and len(pending):
+                summary = pending.groupby("STATUS_GROUP").size().reset_index(name="Count")
+                summary.to_excel(writer, sheet_name="Summary", index=False)
+        return buf.getvalue()
+    
+    
+    def find_latest_image(out_dir: Path, hint: str, after_ts: float) -> Optional[Path]:
+        """Find newest PNG in output folder matching hint, created after after_ts."""
+        if not out_dir.exists():
+            return None
+        candidates = []
+        for p in out_dir.glob("*.png"):
+            try:
+                if p.stat().st_mtime >= after_ts - 2:
+                    if hint.upper() in p.name.upper() or True:
+                        candidates.append(p)
+            except OSError:
+                continue
+        if not candidates:
+            # fallback: any matching hint
+            candidates = [p for p in out_dir.glob("*.png") if hint.upper() in p.name.upper()]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+    
+    
+    def general_output_name(dept_key: str) -> str:
+        """Expected general PNG name from master_code naming."""
+        head_map = {
+            "elect_g": "ELECT_G_Analysis.png",
+            "elect_trd": "ELECT_TRD_Analysis.png",
+            "elect_tro": "ELECT_TRO_Analysis.png",
+            "engg": "ENGG_Sr.DEN_C_Analysis.png",
+            "engg_s": "ENGG_Sr.DEN_S_Analysis.png",
+            "engg_track": "ENGG_DEN_TRACK_Analysis.png",
+            "engg_full": "ENGG_General_Analysis.png",
+            "operating": "OPTG_Analysis.png",
+            "commercial": "COMMERCIAL_Analysis.png",
+            "mechanical": "MECHANICAL_Analysis.png",
+            "snt": "SIGNAL_AND_TELECOM_Analysis.png",
+        }
+        return head_map.get(dept_key, f"{dept_key}_Analysis.png")
+    
+    
+    # =============================================================================
+    # Streamlit page
+    # =============================================================================
+
+    
+    st.markdown(
+        """
+        <style>
+        .main-title { font-size: 1.8rem; font-weight: 700; color: #123A7A; }
+        .sub-title { color: #555; margin-bottom: 1rem; }
+        .section-box {
+            border: 1px solid #D4DDE8; border-radius: 10px;
+            padding: 1rem 1.2rem; margin-bottom: 1rem; background: #F8FAFC;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    
+    st.markdown(
+        '<div class="main-title">🚆 Safety Deficiencies Dashboard</div>'
+        '<div class="sub-title">Indian Railways · Solapur Division · Central Railway</div>',
+        unsafe_allow_html=True,
+    )
+    
+    base, logo_path, out_dir = resolve_output_paths()
+    
+    # ---- Sidebar / controls ----
+    with st.sidebar:
+        st.header("⚙️ Settings")
+    
+        st.subheader("Data source")
+        st.success("🔗 Connected live to the Google Sheet — no upload needed.")
+        if st.button("🔄 Refresh data from Google Sheet", key="smart_refresh_btn", use_container_width=True):
+            load_smart_analysis_data.clear()
+            st.rerun()
+    
+        st.subheader("1. Department")
+        dept_options = {k: v[0] for k, v in DEPARTMENTS.items()}
+        selected_keys = st.multiselect(
+            "Select department(s)",
+            options=list(dept_options.keys()),
+            format_func=lambda k: dept_options[k],
+            default=["operating"],
+        )
+    
+        st.subheader("2. Date range")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            start_date = st.date_input("From", value=date(2026, 4, 1))
+        with col_b:
+            end_date = st.date_input("To", value=date(2026, 7, 31))
+        if start_date > end_date:
+            st.error("From date must be on or before To date.")
+            st.stop()
+    
+        st.subheader("3. Analysis type")
+        mode = st.radio(
+            "Generate",
+            options=["Both", "Detailed only", "General only"],
+            index=0,
+            help="Detailed = combinations.py style · General = master_code.py (PIL) style",
+        )
+    
+        run_btn = st.button("▶ Generate dashboards", type="primary", use_container_width=True)
+    
+    # ---- Load live data straight from the Google Sheet ----
+    try:
+        raw_df = load_smart_analysis_data()
+    except Exception as e:
+        st.error(f"Failed to load data from Google Sheets: {e}")
+        st.stop()
+    
+    filtered_df = filter_by_date(raw_df, start_date, end_date)
+    
+    with st.expander("📊 Data preview (after date filter)", expanded=False):
+        st.write(
+            f"Total rows in sheet: **{len(raw_df)}** · "
+            f"After date filter ({start_date} → {end_date}): **{len(filtered_df)}**"
+        )
+        st.dataframe(filtered_df.head(30), use_container_width=True)
+    
+    if not selected_keys:
+        st.info("Select at least one department in the sidebar.")
+        st.stop()
+    
+    if not run_btn and "results" not in st.session_state:
+        st.info("Choose options on the left, then click **Generate dashboards**.")
+        st.stop()
+    
+    # ---- Generate ----
+    if run_btn:
+        results: List[dict] = []
+        apply_report_period(start_date, end_date)
+        temp_excel = write_temp_excel(filtered_df)
+        # Point unified module at temp filtered data + local output
+        rs.EXCEL_FILE = temp_excel
+        rs.OUTPUT_FOLDER = out_dir
+        rs.OUTPUT_FOLDER_STR = str(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        # Clear general cache so it reloads filtered file
+        rs._cached_df = None
+    
+        progress = st.progress(0.0, text="Starting…")
+        n = len(selected_keys)
+        for i, key in enumerate(selected_keys):
+            label, detailed_key, general_key = DEPARTMENTS[key]
+            progress.progress((i) / max(n, 1), text=f"Processing {label}…")
+            item = {
+                "key": key,
+                "label": label,
+                "detailed_path": None,
+                "general_path": None,
+                "detailed_error": None,
+                "general_error": None,
+                "subhead_xlsx": None,
+                "pending_xlsx": None,
+            }
+            t0 = datetime.now().timestamp()
+    
+            # Force both families to use the same filtered / uploaded Excel
+            excel_arg = str(temp_excel)
+            rs.EXCEL_FILE = temp_excel
+            rs._cached_df = None
+    
+            # Detailed — call with excel= explicitly (defaults are bound at import time)
+            if mode in ("Both", "Detailed only") and detailed_key:
+                try:
+                    if detailed_key in ("engg", "engg_c"):
+                        path = rs.generate_engineering(rs.ENGG_DEFAULT_DEN if detailed_key == "engg" else "Sr.DEN/C", excel=excel_arg)
+                    elif detailed_key == "engg_s":
+                        path = rs.generate_engineering("Sr.DEN/S", excel=excel_arg)
+                    elif detailed_key == "engg_track":
+                        path = rs.generate_engineering("DEN/TRACK", excel=excel_arg)
+                    elif detailed_key == "engg_full":
+                        path = rs.generate_engineering(None, excel=excel_arg)
+                    elif detailed_key in ("elect_g",):
+                        path = rs.generate_elect_g(excel=excel_arg)
+                    elif detailed_key in ("elect_trd",):
+                        path = rs.generate_elect_trd(excel=excel_arg)
+                    elif detailed_key in ("elect_tro", "tro"):
+                        path = rs.generate_elect_tro(excel=excel_arg)
+                    elif detailed_key in ("snt", "s_and_t"):
+                        path = rs.generate_snt(excel=excel_arg)
+                    elif detailed_key == "mechanical":
+                        path = rs.generate_mechanical(excel=excel_arg)
+                    elif detailed_key == "operating":
+                        path = rs.generate_operating(excel=excel_arg)
+                    elif detailed_key == "commercial":
+                        path = rs.generate_commercial(excel=excel_arg)
+                    elif detailed_key in rs.DASHBOARDS:
+                        # fallback: try calling with excel kw if supported
+                        fn = rs.DASHBOARDS[detailed_key]
+                        try:
+                            path = fn(excel=excel_arg)
+                        except TypeError:
+                            path = fn()
+                    else:
+                        raise KeyError(f"Unknown detailed key: {detailed_key}")
+                    item["detailed_path"] = path
+                except Exception as exc:
+                    item["detailed_error"] = str(exc)
+                    hint = DETAILED_OUT_HINTS.get(detailed_key, key.upper())
+                    found = find_latest_image(out_dir, hint, t0)
+                    if found:
+                        item["detailed_path"] = str(found)
+    
+            # General (PIL) — already passed excel=
+            if mode in ("Both", "General only") and general_key:
+                try:
+                    path = rs.generate_general(general_key, excel=temp_excel)
+                    item["general_path"] = path
+                except Exception as exc:
+                    item["general_error"] = str(exc)
+                    expected = out_dir / general_output_name(key)
+                    if expected.exists():
+                        item["general_path"] = str(expected)
+    
+            # Excel downloads + on-page tables (from filtered data)
+            item["subhead_pkg"] = None
+            item["pending_xlsx"] = None
+            item["pending_df"] = None
+            item["summary_df"] = None
+            item["full_df"] = None
+            item["per_subhead_dfs"] = []
+            try:
+                item["subhead_pkg"] = build_subhead_package(filtered_df, key)
+                # rebuild small display frames (same filter logic)
+                work = head_filter_for_dept(filtered_df, key)
+                if not work.empty and "Sub Head" in work.columns:
+                    work = work.copy()
+                    work["Sub Head"] = work["Sub Head"].fillna("").astype(str).str.strip()
+                    work = work[work["Sub Head"] != ""].copy()
+                    if "Status" in work.columns:
+                        work["STATUS_GROUP"] = classify_status_series(work["Status"])
+                    else:
+                        work["STATUS_GROUP"] = "Pending"
+                    orig_cols = _original_columns(work)
+                    summary = (
+                        work.groupby("Sub Head")
+                        .agg(
+                            Total=("Sub Head", "size"),
+                            Resolved=("STATUS_GROUP", lambda x: (x == "Resolved").sum()),
+                            Pending=("STATUS_GROUP", lambda x: (x == "Pending").sum()),
+                            No_Response=("STATUS_GROUP", lambda x: (x == "No Response").sum()),
+                        )
+                        .reset_index()
+                        .sort_values("Total", ascending=False)
+                    )
+                    if len(summary):
+                        summary["% Resolved"] = (
+                            summary["Resolved"] / summary["Total"] * 100
+                        ).round(2)
+                    item["full_df"] = work[orig_cols]
+                    item["per_subhead_dfs"] = [
+                        {"name": sh, "df": work[work["Sub Head"] == sh][orig_cols]}
+                        for sh in summary["Sub Head"].tolist()
+                    ]
+            except Exception as exc:
+                item["detailed_error"] = (item["detailed_error"] or "") + f" | SubHead Excel: {exc}"
+            try:
+                item["pending_xlsx"] = build_pending_excel(filtered_df, key)
+                work = head_filter_for_dept(filtered_df, key)
+                if not work.empty and "Status" in work.columns:
+                    work = work.copy()
+                    work["STATUS_GROUP"] = classify_status_series(work["Status"])
+                    pending = work[work["STATUS_GROUP"].isin(["Pending", "No Response"])]
+                    item["pending_df"] = pending[_original_columns(pending)]
+                elif not work.empty:
+                    item["pending_df"] = work.head(0)
+            except Exception as exc:
+                item["general_error"] = (item["general_error"] or "") + f" | Pending Excel: {exc}"
+    
+            results.append(item)
+    
+        progress.progress(1.0, text="Done")
+        st.session_state["results"] = results
+        st.session_state["period"] = (str(start_date), str(end_date))
+        try:
+            os.unlink(temp_excel)
+        except OSError:
+            pass
+    
+    # ---- Display results ----
+    results = st.session_state.get("results", [])
+    period = st.session_state.get("period", ("", ""))
+    
+    if not results:
+        st.warning("No results yet.")
+        st.stop()
+    
+    st.success(
+        f"Generated for period **{period[0]} → {period[1]}** · "
+        f"{len(results)} department(s)"
+    )
+    
+    for item in results:
+        st.markdown("---")
+        st.subheader(f"📁 {item['label']}")
+    
+        # ----- DETAILED -----
+        if mode in ("Both", "Detailed only") or item.get("detailed_path") or item.get("subhead_pkg"):
+            st.markdown("### 🔎 Detailed Analysis")
+            st.caption("Jurisdiction / classification dashboards (combinations logic)")
+            if item.get("detailed_error"):
+                st.error(f"Detailed: {item['detailed_error']}")
+            if item.get("detailed_path") and Path(item["detailed_path"]).exists():
+                st.image(item["detailed_path"], use_column_width=True)
+                with open(item["detailed_path"], "rb") as f:
+                    st.download_button(
+                        "⬇ Download detailed image (PNG)",
+                        data=f.read(),
+                        file_name=Path(item["detailed_path"]).name,
+                        mime="image/png",
+                        key=f"dl_det_img_{item['key']}",
+                    )
+            elif mode in ("Both", "Detailed only"):
+                st.warning("Detailed image not available.")
+    
+            pkg = item.get("subhead_pkg") or {}
+            # --- Show tables on page + download options ---
+            if item.get("summary_df") is not None and len(item["summary_df"]):
+                st.markdown("#### Sub-Head summary")
+                st.dataframe(item["summary_df"], use_container_width=True, hide_index=True)
+                if pkg.get("summary_xlsx"):
+                    st.download_button(
+                        "⬇ Download Sub-Head summary Excel",
+                        data=pkg["summary_xlsx"],
+                        file_name=f"{item['key']}_SubHead_Summary.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"dl_sum_{item['key']}",
+                    )
+    
+            per_dfs = item.get("per_subhead_dfs") or []
+            per_bytes = (pkg.get("per_subhead") or []) if pkg else []
+            if per_dfs:
+                st.markdown("#### Records by Sub-Head")
+                for i, part in enumerate(per_dfs):
+                    with st.expander(f"📂 {part['name']}  ({len(part['df'])} rows)", expanded=(i == 0)):
+                        st.dataframe(part["df"], use_container_width=True, hide_index=True)
+                        # matching download bytes if available
+                        bdata = None
+                        fname = f"{item['key']}_{part['name']}_Records.xlsx"
+                        if i < len(per_bytes):
+                            bdata = per_bytes[i]["bytes"]
+                            fname = f"{item['key']}_{per_bytes[i]['file']}"
+                        else:
+                            bio = io.BytesIO()
+                            part["df"].to_excel(bio, index=False)
+                            bdata = bio.getvalue()
+                        st.download_button(
+                            f"⬇ Download Excel – {part['name'][:40]}",
+                            data=bdata,
+                            file_name=fname,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key=f"dl_sh_{item['key']}_{i}",
+                        )
+    
+            if item.get("full_df") is not None and len(item["full_df"]):
+                st.markdown("#### Full recorded data (this department)")
+                st.dataframe(item["full_df"], use_container_width=True, hide_index=True)
+                if pkg.get("full_xlsx"):
+                    st.download_button(
+                        "⬇ Download full recorded Excel",
+                        data=pkg["full_xlsx"],
+                        file_name=f"{item['key']}_Full_Records.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"dl_full_{item['key']}",
+                    )
+                if pkg.get("combined_xlsx"):
+                    st.download_button(
+                        "⬇ Download combined workbook (all Sub-Heads + Full)",
+                        data=pkg["combined_xlsx"],
+                        file_name=f"{item['key']}_SubHead_Combined.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"dl_comb_{item['key']}",
+                    )
+    
+        # ----- GENERAL -----
+        if mode in ("Both", "General only") or item.get("general_path") or item.get("pending_xlsx"):
+            st.markdown("### 📋 General Analysis")
+            st.caption("Summary resolution dashboards (master_code / PIL logic)")
+            if item.get("general_error"):
+                st.error(f"General: {item['general_error']}")
+            if item.get("general_path") and Path(item["general_path"]).exists():
+                st.image(item["general_path"], use_column_width=True)
+                with open(item["general_path"], "rb") as f:
+                    st.download_button(
+                        "⬇ Download general image (PNG)",
+                        data=f.read(),
+                        file_name=Path(item["general_path"]).name,
+                        mime="image/png",
+                        key=f"dl_gen_img_{item['key']}",
+                    )
+            elif mode in ("Both", "General only"):
+                st.warning("General image not available.")
+    
+            if item.get("pending_df") is not None:
+                st.markdown("#### Pending / No Response records")
+                if len(item["pending_df"]):
+                    st.dataframe(item["pending_df"], use_container_width=True, hide_index=True)
+                else:
+                    st.info("No pending or no-response records for this selection.")
+                if item.get("pending_xlsx"):
+                    st.download_button(
+                        "⬇ Download Pending records Excel",
+                        data=item["pending_xlsx"],
+                        file_name=f"{item['key']}_Pending_Records.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"dl_pend_{item['key']}",
+                    )
+            elif item.get("pending_xlsx"):
+                st.download_button(
+                    "⬇ Download Pending records Excel",
+                    data=item["pending_xlsx"],
+                    file_name=f"{item['key']}_Pending_Records.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"dl_pend_{item['key']}",
+                )
+    
+    st.markdown("---")
+    st.caption("Source: SARAL · Solapur Division, Central Railway · Generated via Streamlit UI")
