@@ -912,11 +912,11 @@ INSPECTION_BY_LIST = [""] + ["HQ OFFICER CCE/CR", 'DRM/SUR', 'ADRM', 'Sr.DSO', '
                               'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC',
                               'DME', 'DEE/TRD', 'DFM', 'DSTE/HQ', 'DSTE/KLBG', 'ADEN/T/SUR', 'ADEN/W/SUR', 'ADEN/KWV',
                               'ADEN/PVR', 'ADEN/LUR', 'ADEN/KLBG', 'ADSTE/SUR', 'ADSTE/I/KWV', 'ADSTE/II/KWV', 'ADSTE/KLBG', 'DSTE/SUR'
-                              'ADME/SUR', 'AOM/GD', 'AOM/GEN', 'ACM/Cog', 'ACM/TC', 'ACM/GD', 'APO/GEN', 'APO/WEL',
-                              'ADFM/I', 'ADFMII', 'ASC', 'ADSO/SUR', "ADME/WADI", 'DEN/TRACK', 'SAFETY TEAM']
+                              'ADME/SUR', 'AOM/GD', 'AOM/GEN', 'ACM/Cog', 'ACM/T&C', 'ACM/GD', 'APO/GEN', 'APO/WEL',
+                              'ADFM/I', 'ADFM/II', 'ASC', 'ADSO/SUR', "ADME/WADI", 'DEN/TRACK', 'SAFETY TEAM']
 
 ACTION_BY_LIST = [""] + ['DRM/SUR', 'ADRM', 'Sr.DSO', 'Sr.DOM', 'Sr.DEN/S', 'Sr.DEN/C', 'Sr.DEN/Co', 'Sr.DSTE',
-                         'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC', 'CMS', 'ADEN/TM/SUR', 'DEN/TRACK', 'ADEN/GSU']
+                         'Sr.DEE/TRD', 'Sr.DEE/G', 'Sr.DEE/TRO', 'Sr.DME', 'Sr.DCM', 'Sr.DPO', 'Sr.DFM', 'Sr.DMM', 'DSC', 'CMS', 'ADEN/TM/SUR', 'DEN/TRACK', 'DEN/GSU']
 
 VALID_INSPECTIONS = [
     "FOOTPLATE INSPECTION", "STATION INSPECTION", "LC GATE INSPECTION",
